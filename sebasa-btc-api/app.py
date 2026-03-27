@@ -15,10 +15,10 @@ from bit import Key
 # ── Config from environment ──────────────────────────────────────────────────
 RPC_USER = os.getenv("BITCOIN_RPC_USER", "umbrel")
 RPC_PASS = os.getenv("BITCOIN_RPC_PASS", "")
-RPC_HOST = os.getenv("BITCOIN_RPC_HOST", "bitcoin")
+RPC_HOST = os.getenv("BITCOIN_RPC_HOST", "umbrel.local")
 RPC_PORT = int(os.getenv("BITCOIN_RPC_PORT", "8332"))
-MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "mempool_api")
-MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT", "8999"))
+MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "umbrel.local")
+MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT", "3006"))
 SWEEP_ADDRESS = os.getenv("SWEEP_ADDRESS", "")
 
 MEMPOOL_URL = f"http://{MEMPOOL_HOST}:{MEMPOOL_PORT}/api"
@@ -342,26 +342,11 @@ async def node_info():
         "connections": network["connections"],
     }
 
-
-@app.get("/blockheight")
-async def block_height():
-    """Get current block height."""
-    count = await rpc_call("getblockcount")
-    return {"height": count}
-
-
 # ── Fees (via Mempool) ───────────────────────────────────────────────────────
 @app.get("/fees/recommended")
 async def recommended_fees():
     """Get recommended fees from local Mempool instance."""
     return await mempool_get("/v1/fees/recommended")
-
-
-@app.get("/fees/mempool")
-async def mempool_fees():
-    """Get mempool fee distribution from Mempool."""
-    return await mempool_get("/mempool")
-
 
 # ── Address ──────────────────────────────────────────────────────────────────
 @app.get("/address/{address}")
@@ -461,17 +446,137 @@ async def sweep_hex(body: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Mempool Stats ────────────────────────────────────────────────────────────
-@app.get("/mempool")
-async def mempool_info():
-    """Get mempool statistics from the node."""
-    return await rpc_call("getmempoolinfo")
+# ── Public Key Recovery ───────────────────────────────────────────────────────
+
+def _hash160(data: bytes) -> bytes:
+    """RIPEMD160(SHA256(data))"""
+    return hashlib.new("ripemd160", hashlib.sha256(data).digest()).digest()
 
 
-@app.get("/mempool/recent")
-async def mempool_recent():
-    """Get recent transactions from Mempool."""
-    return await mempool_get("/mempool/recent")
+def _base58check_encode(version: bytes, payload: bytes) -> str:
+    """Base58Check encode: version + payload + checksum."""
+    data = version + payload
+    checksum = hashlib.sha256(hashlib.sha256(data).digest()).digest()[:4]
+    raw = data + checksum
+    # Base58 encoding
+    alphabet = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    n = int.from_bytes(raw, "big")
+    chars = []
+    while n > 0:
+        n, r = divmod(n, 58)
+        chars.append(alphabet[r])
+    # leading zeros
+    for byte in raw:
+        if byte == 0:
+            chars.append(alphabet[0])
+        else:
+            break
+    return bytes(reversed(chars)).decode()
+
+
+_BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+
+
+def _bech32_polymod(values):
+    GEN = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
+    chk = 1
+    for v in values:
+        b = chk >> 25
+        chk = ((chk & 0x1FFFFFF) << 5) ^ v
+        for i in range(5):
+            chk ^= GEN[i] if ((b >> i) & 1) else 0
+    return chk
+
+
+def _bech32_hrp_expand(hrp):
+    return [ord(x) >> 5 for x in hrp] + [0] + [ord(x) & 31 for x in hrp]
+
+
+def _bech32_encode(hrp, witver, witprog):
+    """Encode a segwit address (bech32 for v0)."""
+    data = [witver] + _convertbits(witprog, 8, 5)
+    polymod = _bech32_polymod(_bech32_hrp_expand(hrp) + data + [0, 0, 0, 0, 0, 0]) ^ 1
+    checksum = [(polymod >> 5 * (5 - i)) & 31 for i in range(6)]
+    return hrp + "1" + "".join(_BECH32_CHARSET[d] for d in data + checksum)
+
+
+def _convertbits(data, frombits, tobits):
+    acc, bits, ret = 0, 0, []
+    maxv = (1 << tobits) - 1
+    for value in data:
+        acc = (acc << frombits) | value
+        bits += frombits
+        while bits >= tobits:
+            bits -= tobits
+            ret.append((acc >> bits) & maxv)
+    if bits:
+        ret.append((acc << (tobits - bits)) & maxv)
+    return ret
+
+
+def _pubkey_to_addresses(pubkey_hex: str) -> list[str]:
+    """Derive all standard address forms from a public key."""
+    pubkey_bytes = bytes.fromhex(pubkey_hex)
+    h160 = _hash160(pubkey_bytes)
+    addresses = []
+    # P2PKH (1...)
+    addresses.append(_base58check_encode(b"\x00", h160))
+    # P2SH-P2WPKH (3...)
+    witness_script = b"\x00\x14" + h160
+    addresses.append(_base58check_encode(b"\x05", _hash160(witness_script)))
+    # P2WPKH bech32 (bc1q...)
+    addresses.append(_bech32_encode("bc", 0, list(h160)))
+    return addresses
+
+
+@app.get("/address/{address}/getpubkey")
+async def get_pubkey(address: str):
+    """
+    Recover the public key for a Bitcoin address by scanning its transaction history.
+    Only works if the address has spent funds at least once (pubkey is revealed on-chain).
+    """
+    txs = await mempool_get(f"/address/{address}/txs")
+    if not txs:
+        raise HTTPException(status_code=404, detail="No transactions found for this address")
+
+    for tx in txs:
+        txid = tx["txid"]
+        # Check if any input belongs to this address
+        has_matching_input = False
+        for vin in tx.get("vin", []):
+            prevout = vin.get("prevout", {})
+            if prevout and prevout.get("scriptpubkey_address") == address:
+                has_matching_input = True
+                break
+        if not has_matching_input:
+            continue
+
+        # Parse the raw tx to extract pubkeys
+        try:
+            raw = await get_raw_hex(txid)
+            parsed_inputs = _parse_legacy_tx(raw)
+        except Exception:
+            continue
+
+        for pinp in parsed_inputs:
+            pubkey_hex = pinp["pubkey"]
+            derived = _pubkey_to_addresses(pubkey_hex)
+            if address in derived:
+                return {
+                    "address": address,
+                    "pubkey": pubkey_hex,
+                    "found_in_txid": txid,
+                    "derived_addresses": {
+                        "p2pkh": derived[0],
+                        "p2sh_p2wpkh": derived[1],
+                        "p2wpkh": derived[2],
+                    },
+                }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Public key not found. The address may have never spent funds (only received)."
+    )
 
 
 # ── Health ───────────────────────────────────────────────────────────────────
