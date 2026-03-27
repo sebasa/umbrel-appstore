@@ -1,0 +1,42 @@
+manifestVersion: 1
+
+id: sebasa-mempool-watcher
+category: Finance
+name: Mempool Bitcoin Watcher
+version: "1.0.0"
+tagline: Monitor Bitcoin addresses & fire webhooks via your Mempool node
+description: >-
+  Monitors Bitcoin addresses via WebSocket using your local Mempool node
+  (track-addresses). When a transaction is detected on a watched address,
+  it fires an IPN webhook to your configured endpoint.
+
+  Organize addresses into categories, each with its own webhook URL and
+  HMAC secret for signature verification. Includes a web dashboard to
+  manage addresses, categories, and view full transaction and webhook history.
+
+  Features:
+  - Real-time monitoring via WebSocket (no polling)
+  - Multiple categories with independent webhooks and HMAC secrets
+  - Web dashboard: stats, addresses, categories, TX log, webhook log
+  - Auto-reconnect and watchlist sync without restart
+
+developer: sebasa
+website: https://github.com/sebasa/mempool-bitcoin-watcher
+dependencies:
+  - mempool
+
+repo: https://github.com/sebasa/mempool-bitcoin-watcher
+support: https://github.com/sebasa/mempool-bitcoin-watcher/issues
+port: 7890
+
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+
+releaseNotes: >-
+  Initial release. Web UI with full CRUD for addresses and categories,
+  transaction history, webhook log, and real-time stats.
+
+submitter: sebasa
+submission: https://github.com/sebasa/mempool-bitcoin-watcher

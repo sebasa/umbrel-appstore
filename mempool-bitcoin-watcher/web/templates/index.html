@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mempool Bitcoin Watcher</title>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #161a23;
+      --surface2: #1e2330;
+      --border: #2a3045;
+      --accent: #f7931a;
+      --accent2: #ff6b35;
+      --green: #00c896;
+      --red: #ff4757;
+      --yellow: #ffd32a;
+      --text: #e8ecf4;
+      --muted: #6b7a99;
+      --card-radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 62px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; }
+    .logo-sub { font-size: 11px; color: var(--muted); }
+
+    .status-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted);
+      background: var(--surface2);
+      padding: 6px 12px; border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{ opacity:1 } 50%{ opacity:0.4 } }
+
+    /* ── Nav tabs ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex; gap: 4px;
+    }
+    .tab {
+      padding: 12px 18px;
+      font-size: 13px; font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Main content ── */
+    main { padding: 24px 28px; max-width: 1400px; margin: 0 auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Stats grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 18px 20px;
+    }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 700; }
+    .stat-value.accent { color: var(--accent); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.red { color: var(--red); }
+
+    /* ── Section headers ── */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title { font-size: 15px; font-weight: 600; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 16px; border-radius: 8px; border: none;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+    }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-ghost {
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); }
+    .btn-danger { background: #ff475722; color: var(--red); border: 1px solid #ff475744; }
+    .btn-danger:hover { background: #ff475744; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: var(--surface2);
+      padding: 11px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 11px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #ffffff05; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; font-weight: 500;
+    }
+    .badge-green { background: #00c89622; color: var(--green); }
+    .badge-red { background: #ff475722; color: var(--red); }
+    .badge-yellow { background: #ffd32a22; color: var(--yellow); }
+    .badge-blue { background: #3d8bff22; color: #7eb8ff; }
+    .badge-gray { background: var(--surface2); color: var(--muted); }
+
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .truncate { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: #00000088;
+      z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      width: 100%; max-width: 460px;
+      box-shadow: 0 20px 60px #00000066;
+    }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+    .form-input {
+      width: 100%;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px;
+      color: var(--text); font-size: 13px;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    select.form-input { cursor: pointer; }
+    .form-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+
+    /* ── Recent TXs ── */
+    .tx-row {
+      display: flex; align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+    .tx-row:last-child { border-bottom: none; }
+    .tx-icon {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 14px;
+    }
+    .tx-icon.ok { background: #00c89622; }
+    .tx-icon.fail { background: #ff475722; }
+    .tx-info { flex: 1; min-width: 0; }
+    .tx-addr { font-size: 12px; font-family: monospace; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tx-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .tx-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center; padding: 48px 20px;
+      color: var(--muted); font-size: 14px;
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* ── Alert ── */
+    .alert {
+      padding: 12px 16px; border-radius: 10px; font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .alert-info { background: #3d8bff15; border: 1px solid #3d8bff33; color: #7eb8ff; }
+
+    /* ── Config section ── */
+    .config-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 22px 24px;
+      margin-bottom: 16px;
+    }
+    .config-card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+
+    @media (max-width: 600px) {
+      main { padding: 16px; }
+      header { padding: 0 16px; }
+      nav { padding: 0 16px; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">₿</div>
+    <div>
+      <div class="logo-text">Mempool Watcher</div>
+      <div class="logo-sub" id="header-mempool-url">{{ mempool_url }}</div>
+    </div>
+  </div>
+  <div class="status-badge">
+    <div class="dot"></div>
+    <span id="status-text">Activo</span>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showTab('dashboard')">📊 Dashboard</div>
+  <div class="tab" onclick="showTab('addresses')">📍 Direcciones</div>
+  <div class="tab" onclick="showTab('categories')">🏷 Categorías</div>
+  <div class="tab" onclick="showTab('txs')">⚡ Transacciones</div>
+  <div class="tab" onclick="showTab('webhooks')">🔗 Webhooks</div>
+</nav>
+
+<main>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="page-dashboard" class="page active">
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-label">Direcciones</div><div class="stat-value accent" id="s-addresses">—</div></div>
+      <div class="stat-card"><div class="stat-label">Categorías</div><div class="stat-value" id="s-categories">—</div></div>
+      <div class="stat-card"><div class="stat-label">TXs detectadas</div><div class="stat-value" id="s-txs">—</div></div>
+      <div class="stat-card"><div class="stat-label">Notificadas</div><div class="stat-value green" id="s-notified">—</div></div>
+      <div class="stat-card"><div class="stat-label">Fallidas</div><div class="stat-value red" id="s-failed">—</div></div>
+      <div class="stat-card"><div class="stat-label">Webhooks OK</div><div class="stat-value green" id="s-whok">—</div></div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Actividad reciente</div>
+      <button class="btn btn-ghost btn-sm" onclick="loadStats()">↻ Actualizar</button>
+    </div>
+    <div class="table-wrap" id="recent-txs">
+      <div class="empty"><div class="empty-icon">🔍</div>Cargando actividad...</div>
+    </div>
+  </div>
+
+  <!-- ── ADDRESSES ── -->
+  <div id="page-addresses" class="page">
+    <div class="section-header">
+      <div class="section-title">Direcciones vigiladas</div>
+      <button class="btn btn-primary" onclick="openModal('modal-add-addr')">+ Agregar dirección</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Dirección</th>
+            <th>Label</th>
+            <th>Categoría</th>
+            <th>Estado</th>
+            <th>Última TX</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="addr-table-body">
+          <tr><td colspan="6" class="empty">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── CATEGORIES ── -->
+  <div id="page-categories" class="page">
+    <div class="section-header">
+      <div class="section-title">Categorías de webhook</div>
+      <button class="btn btn-primary" onclick="openModal('modal-add-cat')">+ Nueva categoría</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Webhook URL</th>
+            <th>Descrip.</th>
+            <th>Dirs.</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="cat-table-body">
+          <tr><td colspan="6" class="empty">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── TRANSACTIONS ── -->
+  <div id="page-txs" class="page">
+    <div class="section-header">
+      <div class="section-title">Transacciones detectadas</div>
+      <button class="btn btn-ghost btn-sm" onclick="loadTxs()">↻ Actualizar</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>TXID</th>
+            <th>Dirección</th>
+            <th>Categoría</th>
+            <th>Detectada</th>
+            <th>Notificada</th>
+          </tr>
+        </thead>
+        <tbody id="tx-table-body">
+          <tr><td colspan="5" class="empty">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── WEBHOOKS ── -->
+  <div id="page-webhooks" class="page">
+    <div class="section-header">
+      <div class="section-title">Log de webhooks</div>
+      <button class="btn btn-ghost btn-sm" onclick="loadWebhookLog()">↻ Actualizar</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Enviado</th>
+            <th>Categoría</th>
+            <th>TXID</th>
+            <th>URL</th>
+            <th>Status</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody id="wh-table-body">
+          <tr><td colspan="6" class="empty">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── MODALS ── -->
+
+<!-- Add Address -->
+<div class="modal-overlay" id="modal-add-addr">
+  <div class="modal">
+    <div class="modal-title">➕ Agregar dirección</div>
+    <div class="form-group">
+      <label class="form-label">Dirección Bitcoin *</label>
+      <input class="form-input mono" id="new-addr" placeholder="bc1q..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Label / Descripción</label>
+      <input class="form-input" id="new-addr-label" placeholder="Ej: Orden #42" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoría</label>
+      <select class="form-input" id="new-addr-cat">
+        <option value="">Sin categoría</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-addr')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addAddress()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Category -->
+<div class="modal-overlay" id="modal-add-cat">
+  <div class="modal">
+    <div class="modal-title">🏷 Nueva categoría</div>
+    <div class="form-group">
+      <label class="form-label">Nombre *</label>
+      <input class="form-input" id="new-cat-name" placeholder="tienda, donaciones..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Webhook URL *</label>
+      <input class="form-input" id="new-cat-url" placeholder="https://miapp.com/ipn/tienda" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Webhook Secret (HMAC)</label>
+      <input class="form-input" id="new-cat-secret" placeholder="opcional" />
+      <div class="form-hint">Se usa para firmar los payloads con SHA-256</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descripción</label>
+      <input class="form-input" id="new-cat-desc" placeholder="Opcional" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-cat')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addCategory()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let categories = [];
+
+// ── Tab navigation ────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('page-' + name).classList.add('active');
+
+  if (name === 'dashboard') loadStats();
+  if (name === 'addresses') loadAddresses();
+  if (name === 'categories') loadCategories();
+  if (name === 'txs') loadTxs();
+  if (name === 'webhooks') loadWebhookLog();
+}
+
+function openModal(id) {
+  if (id === 'modal-add-addr') populateCatSelect();
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  const data = await fetch(API + '/api/stats').then(r => r.json()).catch(() => null);
+  if (!data) return;
+  document.getElementById('s-addresses').textContent = data.addresses;
+  document.getElementById('s-categories').textContent = data.categories;
+  document.getElementById('s-txs').textContent = data.total_txs;
+  document.getElementById('s-notified').textContent = data.notified_txs;
+  document.getElementById('s-failed').textContent = data.failed_txs;
+  document.getElementById('s-whok').textContent = data.success_webhooks;
+
+  const container = document.getElementById('recent-txs');
+  if (!data.recent_txs || data.recent_txs.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Sin transacciones aún. El watcher está activo y esperando.</div>';
+    return;
+  }
+  container.innerHTML = data.recent_txs.map(tx => `
+    <div class="tx-row">
+      <div class="tx-icon ${tx.notified ? 'ok' : 'fail'}">${tx.notified ? '✅' : '⚠️'}</div>
+      <div class="tx-info">
+        <div class="tx-addr mono">${tx.address}</div>
+        <div class="tx-meta">${tx.category_name || 'sin categoría'} · HTTP ${tx.status_code || '—'}</div>
+      </div>
+      <div class="tx-time">${fmtDate(tx.detected_at)}</div>
+    </div>
+  `).join('');
+}
+
+// ── Addresses ─────────────────────────────────────────────────────────────────
+async function loadAddresses() {
+  const data = await fetch(API + '/api/addresses').then(r => r.json()).catch(() => []);
+  const tbody = document.getElementById('addr-table-body');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">📍</div>Sin direcciones. Agrega una para comenzar.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(a => `
+    <tr>
+      <td><span class="mono truncate" style="display:block;max-width:220px" title="${a.address}">${a.address}</span></td>
+      <td>${a.label || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${a.category_name ? `<span class="badge badge-blue">${a.category_name}</span>` : '<span class="badge badge-gray">sin cat.</span>'}</td>
+      <td><span class="badge ${a.active ? 'badge-green' : 'badge-gray'}">${a.active ? 'Activa' : 'Inactiva'}</span></td>
+      <td><span style="font-size:12px;color:var(--muted)">${a.last_match ? fmtDate(a.last_match) : '—'}</span></td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="deleteAddress('${a.address}')">Eliminar</button>
+        ${a.active
+          ? `<button class="btn btn-ghost btn-sm" onclick="toggleAddress('${a.address}', 0)" style="margin-left:4px">Desactivar</button>`
+          : `<button class="btn btn-ghost btn-sm" onclick="toggleAddress('${a.address}', 1)" style="margin-left:4px">Activar</button>`
+        }
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function addAddress() {
+  const address = document.getElementById('new-addr').value.trim();
+  const label = document.getElementById('new-addr-label').value.trim();
+  const cat_id = document.getElementById('new-addr-cat').value;
+  if (!address) return alert('Ingresa una dirección Bitcoin');
+  const res = await fetch(API + '/api/addresses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ address, label, category_id: cat_id || null })
+  });
+  if (res.ok) {
+    closeModal('modal-add-addr');
+    document.getElementById('new-addr').value = '';
+    document.getElementById('new-addr-label').value = '';
+    loadAddresses();
+  } else {
+    const err = await res.json().catch(() => ({}));
+    alert('Error: ' + (err.description || res.status));
+  }
+}
+
+async function deleteAddress(address) {
+  if (!confirm(`¿Eliminar ${address}?`)) return;
+  await fetch(API + '/api/addresses/' + encodeURIComponent(address), { method: 'DELETE' });
+  loadAddresses();
+}
+
+async function toggleAddress(address, active) {
+  await fetch(API + '/api/addresses/' + encodeURIComponent(address), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active })
+  });
+  loadAddresses();
+}
+
+// ── Categories ────────────────────────────────────────────────────────────────
+async function loadCategories() {
+  categories = await fetch(API + '/api/categories').then(r => r.json()).catch(() => []);
+  const tbody = document.getElementById('cat-table-body');
+  if (!categories.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">🏷</div>Sin categorías. Crea una para organizar tus webhooks.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = categories.map(c => `
+    <tr>
+      <td><strong>${c.name}</strong></td>
+      <td><span class="mono truncate" style="display:block;max-width:200px;font-size:11px" title="${c.webhook_url}">${c.webhook_url}</span></td>
+      <td style="color:var(--muted);font-size:12px">${c.description || '—'}</td>
+      <td><span class="badge badge-blue">${c.address_count}</span></td>
+      <td><span class="badge ${c.active ? 'badge-green' : 'badge-gray'}">${c.active ? 'Activa' : 'Inactiva'}</span></td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id}, '${c.name}')">Eliminar</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleCategory(${c.id}, ${c.active ? 0 : 1})" style="margin-left:4px">${c.active ? 'Desactivar' : 'Activar'}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function addCategory() {
+  const name = document.getElementById('new-cat-name').value.trim();
+  const webhook_url = document.getElementById('new-cat-url').value.trim();
+  const webhook_secret = document.getElementById('new-cat-secret').value.trim();
+  const description = document.getElementById('new-cat-desc').value.trim();
+  if (!name || !webhook_url) return alert('Nombre y URL son requeridos');
+  const res = await fetch(API + '/api/categories', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, webhook_url, webhook_secret, description })
+  });
+  if (res.ok) {
+    closeModal('modal-add-cat');
+    ['new-cat-name','new-cat-url','new-cat-secret','new-cat-desc'].forEach(id => document.getElementById(id).value = '');
+    loadCategories();
+  } else {
+    const err = await res.json().catch(() => ({}));
+    alert('Error: ' + (err.description || res.status));
+  }
+}
+
+async function deleteCategory(id, name) {
+  if (!confirm(`¿Eliminar categoría "${name}"? Las direcciones quedarán sin categoría.`)) return;
+  await fetch(API + '/api/categories/' + id, { method: 'DELETE' });
+  loadCategories();
+}
+
+async function toggleCategory(id, active) {
+  await fetch(API + '/api/categories/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active })
+  });
+  loadCategories();
+}
+
+// ── Transactions ──────────────────────────────────────────────────────────────
+async function loadTxs() {
+  const data = await fetch(API + '/api/txs?limit=100').then(r => r.json()).catch(() => []);
+  const tbody = document.getElementById('tx-table-body');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><div class="empty-icon">⚡</div>Sin transacciones detectadas aún.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(tx => `
+    <tr>
+      <td><span class="mono" style="font-size:11px">${tx.txid.substring(0,16)}…</span></td>
+      <td><span class="mono truncate" style="display:block;max-width:160px;font-size:11px">${tx.address}</span></td>
+      <td>${tx.category_name ? `<span class="badge badge-blue">${tx.category_name}</span>` : '<span class="badge badge-gray">—</span>'}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(tx.detected_at)}</td>
+      <td><span class="badge ${tx.notified ? 'badge-green' : 'badge-red'}">${tx.notified ? '✓ Sí' : '✗ No'}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ── Webhook Log ───────────────────────────────────────────────────────────────
+async function loadWebhookLog() {
+  const data = await fetch(API + '/api/webhook-log?limit=100').then(r => r.json()).catch(() => []);
+  const tbody = document.getElementById('wh-table-body');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">🔗</div>Sin registros de webhooks aún.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(w => `
+    <tr>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(w.sent_at)}</td>
+      <td>${w.category ? `<span class="badge badge-blue">${w.category}</span>` : '—'}</td>
+      <td><span class="mono" style="font-size:11px">${w.txid.substring(0,16)}…</span></td>
+      <td><span class="mono truncate" style="display:block;max-width:180px;font-size:11px" title="${w.webhook_url}">${w.webhook_url}</span></td>
+      <td><span class="badge ${w.status_code && w.status_code < 300 ? 'badge-green' : 'badge-red'}">${w.status_code || '—'}</span></td>
+      <td><span class="badge ${w.success ? 'badge-green' : 'badge-red'}">${w.success ? '✓ OK' : '✗ Fail'}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmtDate(str) {
+  if (!str) return '—';
+  try {
+    return new Date(str + (str.includes('T') ? '' : 'Z')).toLocaleString('es', {
+      day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'
+    });
+  } catch { return str; }
+}
+
+async function populateCatSelect() {
+  const cats = await fetch(API + '/api/categories').then(r => r.json()).catch(() => []);
+  const sel = document.getElementById('new-addr-cat');
+  sel.innerHTML = '<option value="">Sin categoría</option>' +
+    cats.filter(c => c.active).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadStats();
+setInterval(loadStats, 30000);
+</script>
+</body>
+</html>
