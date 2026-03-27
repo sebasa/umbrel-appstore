@@ -5,19 +5,19 @@ tagline: Lightweight REST API for your Bitcoin node
 icon: https://raw.githubusercontent.com/nicehash/bitcoin/master/share/pixmaps/bitcoin128.png
 category: bitcoin
 version: "1.0.0"
-port: 8000
+port: 7891
 description: >-
   A minimal FastAPI-based REST API that connects to your local Bitcoin node
   and Mempool instance. Query blockchain info, broadcast transactions,
   check fees, inspect addresses and UTXOs, extract ECDSA signature values
   (R, S, Z) from transactions — all from your own node, without trusting
   third parties.
-developer: Seb
+developer: sebasa
 website: ""
 repo: ""
 support: ""
 dependencies:
   - bitcoin
   - mempool
-submitter: Seb
+submitter: sebasa
 submission: ""

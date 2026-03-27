@@ -3,17 +3,17 @@ version: "3.7"
 services:
   btc-api:
     build: .
-    container_name: btc-api
+    container_name: sebasa-btc-api
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "7891:7891"
     environment:
       BITCOIN_RPC_USER: ${APP_BITCOIN_RPC_USER:-umbrel}
       BITCOIN_RPC_PASS: ${APP_BITCOIN_RPC_PASS}
-      BITCOIN_RPC_HOST: ${APP_BITCOIN_NODE_IP:-10.21.21.8}
+      BITCOIN_RPC_HOST: ${APP_BITCOIN_NODE_IP:-100.88.134.1}
       BITCOIN_RPC_PORT: ${APP_BITCOIN_RPC_PORT:-8332}
-      MEMPOOL_HOST: ${APP_MEMPOOL_API_IP:-10.21.21.26}
-      MEMPOOL_PORT: ${APP_MEMPOOL_API_PORT:-8999}
+      MEMPOOL_HOST: ${APP_MEMPOOL_API_IP:-100.88.134.1}
+      MEMPOOL_PORT: ${APP_MEMPOOL_API_PORT:-3006}
       SWEEP_ADDRESS: ${APP_SWEEP_ADDRESS:-}
     networks:
       default:
