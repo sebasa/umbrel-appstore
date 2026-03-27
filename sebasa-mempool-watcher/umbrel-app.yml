@@ -21,10 +21,10 @@ description: >-
   - Auto-reconnect and watchlist sync without restart
 
 developer: sebasa
-website: https://github.com/sebasa/mempool-bitcoin-watcher
+website: https://github.com/sebasa/umbrel-mempool-watcher
 
-repo: https://github.com/sebasa/mempool-bitcoin-watcher
-support: https://github.com/sebasa/mempool-bitcoin-watcher/issues
+repo: https://github.com/sebasa/umbrel-mempool-watcher
+support: https://github.com/sebasa/umbrel-mempool-watcher/issues
 port: 7890
 
 releaseNotes: >-
@@ -32,4 +32,4 @@ releaseNotes: >-
   transaction history, webhook log, and real-time stats.
 
 submitter: sebasa
-submission: https://github.com/sebasa/mempool-bitcoin-watcher
+submission: https://github.com/sebasa/umbrel-mempool-watcher
