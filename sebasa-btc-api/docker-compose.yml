@@ -1,23 +1,29 @@
 version: "3.7"
 
 services:
-  btc-api:
-    build: .
-    container_name: sebasa-btc-api
+  api:
+    image: python:3.11-slim
     restart: unless-stopped
     ports:
-      - "7891:7891"
+      - "${APP_SEBASA_BTC_API_PORT:-7891}:7891"
     environment:
       BITCOIN_RPC_USER: ${APP_BITCOIN_RPC_USER:-umbrel}
       BITCOIN_RPC_PASS: ${APP_BITCOIN_RPC_PASS}
-      BITCOIN_RPC_HOST: ${APP_BITCOIN_NODE_IP:-100.88.134.1}
+      BITCOIN_RPC_HOST: ${APP_BITCOIN_NODE_IP:-10.21.21.8}
       BITCOIN_RPC_PORT: ${APP_BITCOIN_RPC_PORT:-8332}
-      MEMPOOL_HOST: ${APP_MEMPOOL_API_IP:-100.88.134.1}
+      MEMPOOL_HOST: ${APP_MEMPOOL_API_IP:-10.21.21.26}
       MEMPOOL_PORT: ${APP_MEMPOOL_API_PORT:-3006}
-      SWEEP_ADDRESS: ${APP_SWEEP_ADDRESS:-}
+      SWEEP_ADDRESS: ${APP_SEBASA_BTC_API_SWEEP_ADDRESS:-}
+    volumes:
+      - ${APP_DATA_DIR}/app.py:/app/app.py:ro
+      - ${APP_DATA_DIR}/requirements.txt:/app/requirements.txt:ro
+    working_dir: /app
+    entrypoint: >
+      sh -c "pip install --no-cache-dir -q -r requirements.txt &&
+             uvicorn app:app --host 0.0.0.0 --port 7891"
     networks:
       default:
-        ipv4_address: $APP_BTC_API_IP
+        ipv4_address: ${APP_SEBASA_BTC_API_IP}
 
 networks:
   default:

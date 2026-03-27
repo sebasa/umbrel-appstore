@@ -1,0 +1,21 @@
+manifestVersion: 1
+id: sebasa-tidarr
+name: Tidarr
+tagline: Self-hosted Tidal media downloader with web UI
+icon: https://raw.githubusercontent.com/cstaelen/tidarr/main/.github/tidarr-logo.png
+category: media
+version: "1.1.9"
+port: 7892
+description: >-
+  Tidarr is a self-hosted Tidal media downloader that provides a web interface
+  to download up to 24-bit 192.0 kHz media (tracks, albums, playlists, music videos)
+  from Tidal. Includes Beets tagging, Plex/Jellyfin library updates, push
+  notifications, Lidarr integration, and playlist sync.
+  Requires a Tidal account.
+developer: cstaelen
+website: https://github.com/cstaelen/tidarr
+repo: https://github.com/cstaelen/tidarr
+support: https://github.com/cstaelen/tidarr/issues
+dependencies: []
+submitter: Sebasa
+submission: ""
