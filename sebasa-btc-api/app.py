@@ -21,7 +21,7 @@ MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "umbrel.local")
 MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT", "3006"))
 SWEEP_ADDRESS = os.getenv("SWEEP_ADDRESS", "")
 
-MEMPOOL_URL = f"http://{MEMPOOL_HOST}:{MEMPOOL_PORT}/api"
+MEMPOOL_URL = f"http://{MEMPOOL_HOST}:{MEMPOOL_PORT}/api/v1"
 RPC_URL = f"http://{RPC_USER}:{RPC_PASS}@{RPC_HOST}:{RPC_PORT}"
 
 # ── App ──────────────────────────────────────────────────────────────────────
