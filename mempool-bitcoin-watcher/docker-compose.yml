@@ -3,38 +3,20 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_MEMPOOL_WATCHER_IP
+      APP_HOST: sebasa-mempool-watcher_web_1
       APP_PORT: 7890
 
   web:
-    image: ghcr.io/sebasa/mempool-bitcoin-watcher:1.0.0
+    image: ghcr.io/sebasa/mempool-bitcoin-watcher:latest
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/data
     environment:
-      # Internal Docker network URL for the Mempool app on Umbrel
-      MEMPOOL_URL: "http://${APP_MEMPOOL_IP}:3000"
-
-      # Fallback webhook for addresses without a category (optional)
+      MEMPOOL_URL: "http://umbrel.local:3006"
       WEBHOOK_URL: ""
       WEBHOOK_SECRET: ""
-
-      # Database location (persisted in APP_DATA_DIR)
       DB_PATH: /data/watcher.db
-
-      # Timing settings
       RECONNECT_DELAY: "10"
       WATCHLIST_SYNC: "60"
       REQUEST_TIMEOUT: "10"
-    networks:
-      default:
-        ipv4_address: $APP_MEMPOOL_WATCHER_IP
-
-networks:
-  default:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: $APP_MEMPOOL_WATCHER_NETWORK
