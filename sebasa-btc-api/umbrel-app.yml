@@ -1,5 +1,5 @@
 manifestVersion: 1
-id: btc-api
+id: sebasa-btc-api
 name: Bitcoin Node API
 tagline: Lightweight REST API for your Bitcoin node
 icon: https://raw.githubusercontent.com/nicehash/bitcoin/master/share/pixmaps/bitcoin128.png
