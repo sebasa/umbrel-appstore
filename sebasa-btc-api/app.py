@@ -302,14 +302,18 @@ async def rpc_call(method: str, params: list = None):
 
 async def mempool_get(path: str):
     """GET request to the local Mempool API."""
+    url = f"{MEMPOOL_URL}{path}"
     try:
-        r = await http.get(f"{MEMPOOL_URL}{path}")
+        r = await http.get(url)
         r.raise_for_status()
         return r.json()
     except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail="Mempool API error")
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Mempool API error: {e.response.status_code} on {url} — {e.response.text[:200]}"
+        )
     except httpx.RequestError as e:
-        raise HTTPException(status_code=502, detail=f"Mempool connection error: {e}")
+        raise HTTPException(status_code=502, detail=f"Mempool connection error: {url} — {e}")
 
 
 async def get_raw_hex(txid: str) -> str:
