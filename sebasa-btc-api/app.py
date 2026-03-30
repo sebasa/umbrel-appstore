@@ -15,10 +15,10 @@ from bit import Key
 # ── Config from environment ──────────────────────────────────────────────────
 RPC_USER = os.getenv("BITCOIN_RPC_USER", "umbrel")
 RPC_PASS = os.getenv("BITCOIN_RPC_PASS", "")
-RPC_HOST = os.getenv("BITCOIN_RPC_HOST", "umbrel.local")
+RPC_HOST = os.getenv("BITCOIN_RPC_HOST", "10.21.21.8")
 RPC_PORT = int(os.getenv("BITCOIN_RPC_PORT", "8332"))
-MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "umbrel.local")
-MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT", "3006"))
+MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "10.21.21.26")
+MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT", "8999"))
 SWEEP_ADDRESS = os.getenv("SWEEP_ADDRESS", "")
 
 MEMPOOL_URL = f"http://{MEMPOOL_HOST}:{MEMPOOL_PORT}/api"
@@ -28,7 +28,7 @@ RPC_URL = f"http://{RPC_USER}:{RPC_PASS}@{RPC_HOST}:{RPC_PORT}"
 app = FastAPI(
     title="Bitcoin Node API",
     description="Lightweight API for interacting with a local Bitcoin node on Umbrel",
-    version="1.0.0",
+    version="1.1.0",
 )
 
 http = httpx.AsyncClient(timeout=30.0)
