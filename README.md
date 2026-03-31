@@ -26,9 +26,6 @@ umbrel-mempool-watcher/
 │   ├── umbrel-app.yml
 │   ├── docker-compose.yml
 │   └── ...your existing files...
-└── sebasa-tidarr/
-    ├── umbrel-app.yml
-    └── docker-compose.yml            ← Uses cstaelen/tidarr Docker Hub image
 ```
 
 ## How to Install on Umbrel
@@ -39,29 +36,10 @@ umbrel-mempool-watcher/
 4. Click **Add**
 5. All three apps will appear under **"Sebasa's Apps"**
 
-## Tidarr Setup
-
-After installing Tidarr from the app store:
-
-1. Open `http://umbrel.local:8484`
-2. Authenticate your Tidal account through the UI token dialog
-3. Configure download quality in settings
-4. Downloads are saved to `/home/umbrel/media/music` by default
-
-Tidarr supports optional integrations with Plex, Jellyfin, Navidrome, Beets, Lidarr,
-and push notifications (Gotify, Ntfy). Configure these via environment variables in
-the docker-compose.yml file.
-
 ## BTC API Endpoints
 
 ### Node Info
-- `GET /info` — Node status, sync progress, connections
-- `GET /blockheight` — Current block height
 - `GET /health` — Health check (node + mempool)
-
-### Fees (via Mempool)
-- `GET /fees/recommended` — Recommended fee rates
-- `GET /fees/mempool` — Fee distribution
 
 ### Address
 - `GET /address/{addr}` — Balance & tx count
@@ -77,9 +55,3 @@ the docker-compose.yml file.
 ### Sweep
 - `POST /sweep/wif` — Sweep from WIF key `{"key": "..."}`
 - `POST /sweep/hex` — Sweep from hex key `{"key": "..."}`
-
-### Mempool
-- `GET /mempool` — Mempool stats from node
-- `GET /mempool/recent` — Recent mempool txs
-
-API docs: `http://umbrel.local:8000/docs`

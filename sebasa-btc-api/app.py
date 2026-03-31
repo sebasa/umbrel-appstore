@@ -18,7 +18,7 @@ RPC_PASS = os.getenv("BITCOIN_RPC_PASS", "")
 RPC_HOST = os.getenv("BITCOIN_RPC_HOST", "10.21.21.8")
 RPC_PORT = int(os.getenv("BITCOIN_RPC_PORT", "8332"))
 MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "10.21.21.26")
-MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT", "8999"))
+MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT", "3006"))
 SWEEP_ADDRESS = os.getenv("SWEEP_ADDRESS", "")
 
 MEMPOOL_URL = f"http://{MEMPOOL_HOST}:{MEMPOOL_PORT}/api"
@@ -329,28 +329,6 @@ async def get_raw_hex(txid: str) -> str:
 # ═════════════════════════════════════════════════════════════════════════════
 #  ENDPOINTS
 # ═════════════════════════════════════════════════════════════════════════════
-
-# ── Node Info ────────────────────────────────────────────────────────────────
-@app.get("/info")
-async def node_info():
-    """Get Bitcoin node information: block height, sync status, network."""
-    blockchain = await rpc_call("getblockchaininfo")
-    network = await rpc_call("getnetworkinfo")
-    return {
-        "chain": blockchain["chain"],
-        "blocks": blockchain["blocks"],
-        "headers": blockchain["headers"],
-        "sync_progress": round(blockchain["verificationprogress"] * 100, 2),
-        "pruned": blockchain["pruned"],
-        "version": network["subversion"],
-        "connections": network["connections"],
-    }
-
-# ── Fees (via Mempool) ───────────────────────────────────────────────────────
-@app.get("/fees/recommended")
-async def recommended_fees():
-    """Get recommended fees from local Mempool instance."""
-    return await mempool_get("/v1/fees/recommended")
 
 # ── Address ──────────────────────────────────────────────────────────────────
 @app.get("/address/{address}")
