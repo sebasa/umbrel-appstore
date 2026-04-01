@@ -17,7 +17,7 @@ RPC_USER = os.getenv("BITCOIN_RPC_USER", "umbrel")
 RPC_PASS = os.getenv("BITCOIN_RPC_PASS", "")
 RPC_HOST = os.getenv("BITCOIN_RPC_HOST", "10.21.21.8")
 RPC_PORT = int(os.getenv("BITCOIN_RPC_PORT", "8332"))
-MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "100.88.134.11")
+MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "172.17.0.1")
 MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT", "3006"))
 SWEEP_ADDRESS = os.getenv("SWEEP_ADDRESS", "")
 
