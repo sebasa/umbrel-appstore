@@ -44,8 +44,15 @@ Lightweight REST API for your local Bitcoin node + Mempool. Built with FastAPI, 
 ### Sweep
 | Method | Endpoint       | Description                          |
 |--------|----------------|--------------------------------------|
-| POST   | `/sweep/wif`   | Sweep from WIF key `{"key": "..."}`  |
-| POST   | `/sweep/hex`   | Sweep from hex key `{"key": "..."}`  |
+| POST   | `/sweep/wif`     | Sweep from WIF key `{"key": "..."}`  |
+| POST   | `/sweep/hex`     | Sweep from hex key `{"key": "..."}`  |
+| GET    | `/sweepwif/{key}`| Sweep from WIF key via URL           |
+| GET    | `/sweephex/{key}`| Sweep from hex key via URL           |
+
+### Worker Notifications
+| Method | Endpoint           | Description                                    |
+|--------|--------------------|------------------------------------------------|
+| POST   | `/btcpuzzleinfo`   | Webhook for worker status & key verification   |
 
 ### Mempool
 | Method | Endpoint           | Description              |
@@ -89,6 +96,9 @@ Lightweight REST API for your local Bitcoin node + Mempool. Built with FastAPI, 
 | `MEMPOOL_HOST`        | `mempool.local`   | Mempool API hostname/IP     |
 | `MEMPOOL_PORT`        | `3006`          | Mempool API port            |
 | `SWEEP_ADDRESS`       | —               | Destination for sweep calls |
+| `TELEGRAM_TOKEN`      | —               | Bot token for notifications |
+| `TELEGRAM_CHATID`     | —               | Chat ID for notifications   |
+| `WEBHOOKHA`           | —               | Webhook URL for key found   |
 
 
 ## Install on Umbrel

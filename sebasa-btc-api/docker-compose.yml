@@ -7,13 +7,13 @@ services:
     ports:
       - "${APP_SEBASA_BTC_API_PORT:-7891}:7891"
     environment:
-      BITCOIN_RPC_USER: ${BITCOIN_RPC_USER:-umbrel}
-      BITCOIN_RPC_PASS: ${BITCOIN_RPC_PASS}
-      BITCOIN_RPC_HOST: ${BITCOIN_RPC_HOST:-10.21.21.8}
-      BITCOIN_RPC_PORT: ${BITCOIN_RPC_PORT:-8332}
+      BITCOIN_RPC_USER: ${APP_BITCOIN_RPC_USER:-umbrel}
+      BITCOIN_RPC_PASS: ${APP_BITCOIN_RPC_PASS}
+      BITCOIN_RPC_HOST: ${BITCOIN_RPC_HOST:-172.17.0.1}
+      BITCOIN_RPC_PORT: ${APP_BITCOIN_RPC_PORT:-8332}
       MEMPOOL_HOST: ${MEMPOOL_HOST:-172.17.0.1}
       MEMPOOL_PORT: ${MEMPOOL_PORT:-3006}
-      SWEEP_ADDRESS: ${SWEEP_ADDRESS:-}
+      SWEEP_ADDRESS: ${SWEEP_ADDRESS:-1FoUndiTnDraStWJEh4t9JCnWRMLFN2eY5}
     volumes:
       - ${APP_DATA_DIR}/app.py:/app/app.py:ro
       - ${APP_DATA_DIR}/requirements.txt:/app/requirements.txt:ro

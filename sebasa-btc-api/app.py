@@ -8,18 +8,21 @@ import os
 import hashlib
 import struct
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from bit import Key
 
 # ── Config from environment ──────────────────────────────────────────────────
-RPC_USER = os.getenv("BITCOIN_RPC_USER", "umbrel")
-RPC_PASS = os.getenv("BITCOIN_RPC_PASS", "")
-RPC_HOST = os.getenv("BITCOIN_RPC_HOST", "umbrel.local")
-RPC_PORT = int(os.getenv("BITCOIN_RPC_PORT", "8332"))
-MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "umbrel.local")
-MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT", "3006"))
+RPC_USER = os.getenv("BITCOIN_RPC_USER")
+RPC_PASS = os.getenv("BITCOIN_RPC_PASS")
+RPC_HOST = os.getenv("BITCOIN_RPC_HOST")
+RPC_PORT = int(os.getenv("BITCOIN_RPC_PORT")) 
+MEMPOOL_HOST = os.getenv("MEMPOOL_HOST")
+MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT")) 
 SWEEP_ADDRESS = os.getenv("SWEEP_ADDRESS", "")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
+TELEGRAM_CHATID = os.getenv("TELEGRAM_CHATID", "")
+WEBHOOKHA = os.getenv("WEBHOOKHA", "")
 
 MEMPOOL_URL = f"http://{MEMPOOL_HOST}:{MEMPOOL_PORT}/api"
 RPC_URL = f"http://{RPC_USER}:{RPC_PASS}@{RPC_HOST}:{RPC_PORT}"
@@ -428,6 +431,18 @@ async def sweep_hex(body: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/sweepwif/{key}")
+async def sweep_wif_get(key: str):
+    """Convenience GET endpoint to sweep from a WIF private key via URL."""
+    return await sweep_wif({"key": key})
+
+
+@app.get("/sweephex/{key}")
+async def sweep_hex_get(key: str):
+    """Convenience GET endpoint to sweep from a hex private key via URL."""
+    return await sweep_hex({"key": key})
+
+
 # ── Public Key Recovery ───────────────────────────────────────────────────────
 
 def _hash160(data: bytes) -> bytes:
@@ -559,6 +574,58 @@ async def get_pubkey(address: str):
         status_code=404,
         detail="Public key not found. The address may have never spent funds (only received)."
     )
+
+
+# ── Worker Notifications & Telegram ──────────────────────────────────────────
+
+async def share_telegram(msg: str):
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHATID:
+        return ""
+    postdata = {
+        "chat_id": TELEGRAM_CHATID,
+        "text": msg
+    }
+    try:
+        r = await http.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", data=postdata)
+        return r.text
+    except Exception as e:
+        print(f"Telegram error: {e}")
+        return ""
+
+@app.post("/btcpuzzleinfo")
+async def handle_worker_notification(request: Request):
+    headers = request.headers
+    status = headers.get('status', '')
+    hex_value = headers.get('hex', '')
+    worker_address = headers.get('workeraddress', '')
+    worker_name = headers.get('workername', '')
+    private_key = headers.get('privatekey', '')
+    scan_type = headers.get('scantype', '')
+    target_puzzle = headers.get('targetpuzzle', '')
+
+    if status == "workerStarted":
+        await share_telegram(f"{worker_address}{worker_name} started job!")
+    elif status == "workerExited":
+        await share_telegram(f"{worker_address}{worker_name} goes offline!")
+    elif status == "rangeScanned":
+        await share_telegram(f"{hex_value} scanned by {worker_address}{worker_name}")
+    elif status == "reachedOfKeySpace":
+        await share_telegram(f"{worker_address}{worker_name} reached of keyspace!")
+    elif status == "keyFound":
+        await share_telegram(private_key)
+        await share_telegram(f"Congratulations! {worker_address}{worker_name} found the key!")
+        try:
+            await sweep_hex({"key": private_key})
+        except Exception as e:
+            await share_telegram(f"Sweep failed: {e}")
+        
+        if WEBHOOKHA:
+            try:
+                await http.get(WEBHOOKHA)
+            except Exception as e:
+                print(f"Webhook error: {e}")
+
+    return JSONResponse(content="Notification received successfully!", status_code=200)
 
 
 # ── Health ───────────────────────────────────────────────────────────────────
