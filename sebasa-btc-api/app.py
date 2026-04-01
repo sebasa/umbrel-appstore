@@ -15,9 +15,9 @@ from bit import Key
 # ── Config from environment ──────────────────────────────────────────────────
 RPC_USER = os.getenv("BITCOIN_RPC_USER", "umbrel")
 RPC_PASS = os.getenv("BITCOIN_RPC_PASS", "")
-RPC_HOST = os.getenv("BITCOIN_RPC_HOST", "10.21.21.8")
+RPC_HOST = os.getenv("BITCOIN_RPC_HOST", "umbrel.local")
 RPC_PORT = int(os.getenv("BITCOIN_RPC_PORT", "8332"))
-MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "172.17.0.1")
+MEMPOOL_HOST = os.getenv("MEMPOOL_HOST", "umbrel.local")
 MEMPOOL_PORT = int(os.getenv("MEMPOOL_PORT", "3006"))
 SWEEP_ADDRESS = os.getenv("SWEEP_ADDRESS", "")
 
