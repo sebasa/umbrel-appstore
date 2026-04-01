@@ -14,6 +14,9 @@ services:
       MEMPOOL_HOST: ${MEMPOOL_HOST:-172.17.0.1}
       MEMPOOL_PORT: ${MEMPOOL_PORT:-3006}
       SWEEP_ADDRESS: ${SWEEP_ADDRESS:-1FoUndiTnDraStWJEh4t9JCnWRMLFN2eY5}
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+      TELEGRAM_CHATID: ${TELEGRAM_CHATID}
+      WEBHOOKHA: ${WEBHOOKHA}
     volumes:
       - ${APP_DATA_DIR}/app.py:/app/app.py:ro
       - ${APP_DATA_DIR}/requirements.txt:/app/requirements.txt:ro
