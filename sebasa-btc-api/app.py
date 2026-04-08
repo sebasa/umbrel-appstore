@@ -24,6 +24,9 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 TELEGRAM_CHATID = os.getenv("TELEGRAM_CHATID", "")
 WEBHOOKHA = os.getenv("WEBHOOKHA", "")
 
+# Fee altísimo para barrido (satoshis por byte)
+HIGH_FEE = int(os.getenv("HIGH_FEE", "5000"))
+
 MEMPOOL_URL = f"http://{MEMPOOL_HOST}:{MEMPOOL_PORT}/api"
 RPC_URL = f"http://{RPC_USER}:{RPC_PASS}@{RPC_HOST}:{RPC_PORT}"
 
@@ -352,6 +355,22 @@ async def address_txs(address: str):
     return await mempool_get(f"/address/{address}/txs")
 
 
+@app.get("/address/{address}/out_txids")
+async def address_out_txids(address: str):
+    """
+    Get only the transaction IDs (txid) where the address is sending funds (outbound).
+    Si con "salida" te refieres a las salidas (UTXOs), puedes obtenerlas mapeando los UTXOs de /address/{address}/utxos
+    """
+    txs = await mempool_get(f"/address/{address}/txs")
+    out_txids = []
+    for tx in txs:
+        # Check if the address is an input (meaning funds are going OUT of this address)
+        is_spend = any(vin.get("prevout", {}).get("scriptpubkey_address") == address for vin in tx.get("vin", []))
+        if is_spend:
+            out_txids.append(tx["txid"])
+    return out_txids
+
+
 # ── Transactions ─────────────────────────────────────────────────────────────
 @app.get("/tx/{txid}")
 async def get_transaction(txid: str):
@@ -407,7 +426,7 @@ async def sweep_wif(body: dict):
         raise HTTPException(status_code=400, detail="Missing 'key' field")
     try:
         k = Key(wif)
-        tx = k.create_transaction([], leftover=SWEEP_ADDRESS)
+        tx = k.create_transaction([], leftover=SWEEP_ADDRESS, fee=HIGH_FEE)
         txid = await rpc_call("sendrawtransaction", [tx])
         return {"txid": txid, "from": k.address, "to": SWEEP_ADDRESS}
     except Exception as e:
@@ -424,7 +443,7 @@ async def sweep_hex(body: dict):
         raise HTTPException(status_code=400, detail="Missing 'key' field")
     try:
         k = Key.from_hex(hexkey)
-        tx = k.create_transaction([], leftover=SWEEP_ADDRESS)
+        tx = k.create_transaction([], leftover=SWEEP_ADDRESS, fee=HIGH_FEE)
         txid = await rpc_call("sendrawtransaction", [tx])
         return {"txid": txid, "from": k.address, "to": SWEEP_ADDRESS}
     except Exception as e:
