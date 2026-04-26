@@ -1,9 +1,10 @@
 manifestVersion: 1
 id: sebasa-btc-api
 name: Bitcoin Node API
+icon: https://raw.githubusercontent.com/sebasa/umbrel-mempool-watcher/main/sebasa-btc-api/icon.png
 tagline: Lightweight REST API for your Bitcoin node
 category: bitcoin
-version: "1.1.0"
+version: "1.1.1"
 port: 7891
 description: >-
   Unlock the full potential of your Umbrel node with this lightweight, lightning-fast REST API. Built on FastAPI, it seamlessly connects to your local Bitcoin Core and Mempool instances, allowing you to interact with the blockchain entirely privately—without relying on external third-party servers.
