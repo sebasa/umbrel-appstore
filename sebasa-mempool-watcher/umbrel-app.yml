@@ -1,9 +1,9 @@
 manifestVersion: 1
 id: sebasa-mempool-watcher
-icon: https://raw.githubusercontent.com/sebasa/umbrel-mempool-watcher/main/sebasa-mempool-watcher/icon.png
+icon: https://raw.githubusercontent.com/sebasa/umbrel-mempool-watcher/main/sebasa-mempool-watcher/icon.svg
 category: Finance
 name: Mempool Bitcoin Watcher
-version: "1.1.0"
+version: "1.1.1"
 tagline: Monitor Bitcoin addresses & fire webhooks via your Mempool node
 description: >-
   Never miss a transaction again. Mempool Bitcoin Watcher turns your Umbrel node into a powerful, real-time alerting system. By utilizing zero-polling WebSocket connections to your local Mempool instance, it instantly detects when watched addresses send or receive funds and fires off customizable webhooks to your preferred services.

@@ -9,7 +9,7 @@ import hashlib
 import struct
 import httpx
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from bit import Key
 
 # ── Config from environment ──────────────────────────────────────────────────
@@ -332,6 +332,12 @@ async def get_raw_hex(txid: str) -> str:
 # ═════════════════════════════════════════════════════════════════════════════
 #  ENDPOINTS
 # ═════════════════════════════════════════════════════════════════════════════
+
+# ── Root ─────────────────────────────────────────────────────────────────────
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redirect root to the API documentation."""
+    return RedirectResponse(url="/docs")
 
 # ── Address ──────────────────────────────────────────────────────────────────
 @app.get("/address/{address}")
