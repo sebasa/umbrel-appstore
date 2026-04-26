@@ -1,0 +1,17 @@
+manifestVersion: 1
+id: sebasa-tidarr
+name: Tidarr
+icon: https://raw.githubusercontent.com/sebasa/umbrel-appstore/main/tidarr/icon.svg
+tagline: Download media from Tidal
+category: media
+version: "1.0.0"
+port: 7892
+description: >-
+  Tidarr is a Docker image that provides a web interface to download up to 24-bit 192.0 kHz media (tracks, albums, playlists, music videos) from Tidal.
+developer: cstaelen
+website: "https://github.com/cstaelen/tidarr"
+repo: "https://github.com/cstaelen/tidarr"
+support: "https://github.com/cstaelen/tidarr/issues"
+dependencies: []
+submitter: Sebasa
+submission: ""
