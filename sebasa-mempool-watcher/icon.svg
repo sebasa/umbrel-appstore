@@ -1,0 +1,39 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Fondo transparente -->
+
+  <!-- Forma del ojo (almendrada) -->
+  <path d="M36 256 
+           Q256 80 476 256 
+           Q256 432 36 256 Z" 
+        fill="#7E6BB5"/>
+
+  <!-- Interior del ojo -->
+  <path d="M96 256 
+           Q256 120 416 256 
+           Q256 392 96 256 Z" 
+        fill="#9B8ACB"/>
+
+  <!-- Iris -->
+  <circle cx="256" cy="256" r="75" fill="#F2C14E"/>
+
+  <!-- Detalle del iris (gradiente radial) -->
+  <defs>
+    <radialGradient id="irisGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF3CC"/>
+      <stop offset="60%" stop-color="#F2C14E"/>
+      <stop offset="100%" stop-color="#D9A63A"/>
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="256" r="75" fill="url(#irisGrad)"/>
+
+  <!-- Esclerótica (parte blanca) -->
+  <circle cx="256" cy="256" r="38" fill="#F5F5F5"/>
+
+  <!-- Pupila -->
+  <circle cx="256" cy="256" r="18" fill="#C9972E"/>
+
+  <!-- Brillo -->
+  <circle cx="235" cy="235" r="8" fill="#FFFFFF" opacity="0.8"/>
+
+</svg>

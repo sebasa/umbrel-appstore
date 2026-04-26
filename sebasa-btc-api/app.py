@@ -23,12 +23,9 @@ SWEEP_ADDRESS = os.getenv("SWEEP_ADDRESS", "")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 TELEGRAM_CHATID = os.getenv("TELEGRAM_CHATID", "")
 WEBHOOKHA = os.getenv("WEBHOOKHA", "")
-
-# Fee altísimo para barrido (satoshis por byte)
-HIGH_FEE = int(os.getenv("HIGH_FEE", "5000"))
-
 MEMPOOL_URL = f"http://{MEMPOOL_HOST}:{MEMPOOL_PORT}/api"
 RPC_URL = f"http://{RPC_USER}:{RPC_PASS}@{RPC_HOST}:{RPC_PORT}"
+HIGH_FEE = int(os.getenv("HIGH_FEE", "150"))
 
 # ── App ──────────────────────────────────────────────────────────────────────
 app = FastAPI(
@@ -437,7 +434,7 @@ async def sweep_wif(body: dict):
         raise HTTPException(status_code=400, detail="Missing 'key' field")
     try:
         k = Key(wif)
-        tx = k.create_transaction([], leftover=SWEEP_ADDRESS, fee=HIGH_FEE)
+        tx = k.create_transaction([], leftover=SWEEP_ADDRESS, fee=HIGH_FEE, replace_by_fee=False)
         txid = await rpc_call("sendrawtransaction", [tx])
         return {"txid": txid, "from": k.address, "to": SWEEP_ADDRESS}
     except Exception as e:
@@ -454,7 +451,7 @@ async def sweep_hex(body: dict):
         raise HTTPException(status_code=400, detail="Missing 'key' field")
     try:
         k = Key.from_hex(hexkey)
-        tx = k.create_transaction([], leftover=SWEEP_ADDRESS, fee=HIGH_FEE)
+        tx = k.create_transaction([], leftover=SWEEP_ADDRESS, fee=HIGH_FEE, replace_by_fee=False)
         txid = await rpc_call("sendrawtransaction", [tx])
         return {"txid": txid, "from": k.address, "to": SWEEP_ADDRESS}
     except Exception as e:
@@ -630,8 +627,6 @@ async def handle_worker_notification(request: Request):
     worker_address = headers.get('workeraddress', '')
     worker_name = headers.get('workername', '')
     private_key = headers.get('privatekey', '')
-    scan_type = headers.get('scantype', '')
-    target_puzzle = headers.get('targetpuzzle', '')
 
     if status == "workerStarted":
         await share_telegram(f"{worker_address}{worker_name} started job!")
