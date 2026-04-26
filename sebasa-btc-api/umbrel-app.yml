@@ -2,16 +2,15 @@ manifestVersion: 1
 id: sebasa-btc-api
 name: Bitcoin Node API
 tagline: Lightweight REST API for your Bitcoin node
-icon: https://raw.githubusercontent.com/nicehash/bitcoin/master/share/pixmaps/bitcoin128.png
 category: bitcoin
 version: "1.1.0"
 port: 7891
 description: >-
-  A minimal FastAPI-based REST API that connects to your local Bitcoin node
-  and Mempool instance. Query blockchain info, broadcast transactions,
-  check fees, inspect addresses and UTXOs, extract ECDSA signature values
-  (R, S, Z) from transactions — all from your own node, without trusting
-  third parties.
+  Unlock the full potential of your Umbrel node with this lightweight, lightning-fast REST API. Built on FastAPI, it seamlessly connects to your local Bitcoin Core and Mempool instances, allowing you to interact with the blockchain entirely privately—without relying on external third-party servers.
+
+  Easily query blockchain info, broadcast raw transactions, check real-time fee rates, inspect addresses, and monitor UTXOs. It also includes advanced cryptographic endpoints, such as the ability to extract ECDSA signature values (R, S, Z) directly from raw transactions.
+
+  Whether you are a developer building sovereign Bitcoin applications, or just a node operator wanting programmable access to your own data, this API provides everything you need with zero bloat.
 developer: Sebasa
 website: ""
 repo: ""
