@@ -11,6 +11,7 @@ services:
     #   image: tuusuario/blockparser-gui:1.0.0@sha256:...
     # En tu app store podés buildear local con: build: .
     build: .
+    image: sebasa/blockparser-gui:1.0.0@sha256:4e2a20997b4e134dcc58d505679a29af5d0772187c7fc49de1216668f6fb5a5d
     restart: on-failure
     stop_grace_period: 1m
     volumes:
