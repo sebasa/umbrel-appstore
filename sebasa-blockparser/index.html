@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blockparser GUI</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel-2:#1e222b; --line:#2a2f3a;
+    --txt:#e8eaed; --muted:#9aa3b2; --accent:#f7931a; --accent-d:#c9760f;
+    --ok:#3fb950; --warn:#f0a020; --err:#f85149; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 20px 64px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  header .dot{width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    display:grid;place-items:center;font-weight:800;color:#1a1205}
+  h1{font-size:20px;margin:0;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 22px 42px}
+  .card{background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);padding:18px;margin-bottom:16px}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--muted);margin:0 0 14px}
+  .node{display:flex;gap:18px;flex-wrap:wrap;font-size:14px}
+  .node .pill{display:flex;align-items:center;gap:7px}
+  .pip{width:9px;height:9px;border-radius:50%}
+  .pip.ok{background:var(--ok)} .pip.warn{background:var(--warn)} .pip.err{background:var(--err)}
+  .banner{border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:14px;display:none}
+  .banner.err{display:block;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.4)}
+  .cbs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:600px){.cbs{grid-template-columns:1fr}}
+  .cb{border:1px solid var(--line);border-radius:12px;padding:13px 14px;cursor:pointer;
+    background:var(--panel-2);transition:.15s}
+  .cb:hover{border-color:#3a4150}
+  .cb.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .cb .t{font-weight:600;margin-bottom:3px}
+  .cb .d{font-size:12.5px;color:var(--muted)}
+  .cb .ram{font-size:11px;color:var(--muted);margin-top:6px}
+  .range{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap}
+  .range label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+  input[type=number]{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);
+    border-radius:9px;padding:9px 11px;width:140px;font-size:14px}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px}
+  button{background:var(--accent);color:#1a1205;border:0;border-radius:10px;
+    padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;margin-top:16px}
+  button:hover{background:var(--accent-d);color:#fff}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:600}
+  .bar{height:8px;background:var(--panel-2);border-radius:6px;overflow:hidden;margin:10px 0}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-d));transition:width .4s}
+  .meta-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+  pre.log{background:#0a0c10;border:1px solid var(--line);border-radius:10px;
+    padding:12px;font-size:12px;line-height:1.45;max-height:200px;overflow:auto;margin:12px 0 0;
+    color:#b8c0cc;white-space:pre-wrap;word-break:break-word}
+  .files a{display:inline-block;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:9px;padding:8px 12px;margin:6px 6px 0 0;color:var(--accent);text-decoration:none;font-size:13px}
+  .files a:hover{border-color:var(--accent)}
+  .job{border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:9px;font-size:13px}
+  .job .top{display:flex;justify-content:space-between;align-items:center}
+  .tag{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line)}
+  .tag.done{color:var(--ok);border-color:rgba(63,185,80,.4)}
+  .tag.error{color:var(--err);border-color:rgba(248,81,73,.4)}
+  .tag.running,.tag.preparing{color:var(--accent);border-color:rgba(247,147,26,.4)}
+  .tag.cancelled{color:var(--muted)}
+  .empty{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="dot">₿</div><h1>Blockparser GUI</h1></header>
+  <p class="sub">Export de datos crudos de tu blockchain · fork sebasa/blockparser 0.12.5</p>
+
+  <div id="banner" class="banner err"></div>
+
+  <div class="card">
+    <h2>Estado del nodo</h2>
+    <div class="node" id="node">Cargando…</div>
+  </div>
+
+  <div class="card">
+    <h2>1 · Elegí qué exportar</h2>
+    <div class="cbs" id="cbs"></div>
+
+    <div class="range">
+      <div><label>Altura inicial (-s)</label><input type="number" id="start" min="0" placeholder="0"></div>
+      <div><label>Altura final (-e)</label><input type="number" id="end" min="0" placeholder="tip"></div>
+    </div>
+    <div class="hint">Para <code>csvdump</code> usá siempre un rango acotado: el dump completo son cientos de GiB.</div>
+
+    <button id="run">Ejecutar export</button>
+  </div>
+
+  <div class="card" id="liveCard" style="display:none">
+    <h2>Job en curso</h2>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="meta-row"><span id="liveState">—</span><span id="liveEta"></span></div>
+    <pre class="log" id="liveLog"></pre>
+    <div class="files" id="liveFiles"></div>
+    <button class="ghost" id="cancel">Cancelar</button>
+  </div>
+
+  <div class="card">
+    <h2>Historial</h2>
+    <div id="jobs"><div class="empty">Sin jobs todavía.</div></div>
+  </div>
+</div>
+
+<script>
+let META=null, SELECTED=null, ES=null, CURRENT=null;
+
+const $=s=>document.querySelector(s);
+const api=(u,o)=>fetch('/api'+u,o).then(r=>r.json());
+
+function showError(msg){const b=$('#banner');b.textContent=msg;b.classList.add('err');}
+
+async function loadMeta(){
+  META=await api('/meta');
+  renderNode(META.node);
+  renderCallbacks(META.callbacks);
+  if(META.node.pruned){showError('⚠️ El nodo está en modo pruned. blockparser necesita la cadena completa (unpruned); los exports van a fallar.');}
+  else if(!META.node.blocks_dir_ok){showError('⚠️ No se encuentra /bitcoin/blocks. Revisá el mount del data dir de Bitcoin.');}
+}
+
+function renderNode(n){
+  const ok=v=>v?'ok':'err';
+  const dirState = n.blocks_dir_ok?'ok':'err';
+  const pruneState = n.pruned===true?'err':(n.pruned===false?'ok':'warn');
+  $('#node').innerHTML=`
+    <div class="pill"><span class="pip ${dirState}"></span>blocks/ ${n.blocks_dir_ok?'accesible':'no encontrado'}</div>
+    <div class="pill"><span class="pip ${pruneState}"></span>${n.pruned===true?'pruned ('+n.prune_value+')':(n.pruned===false?'cadena completa':'pruning desconocido')}</div>
+    <div class="pill"><span class="pip ${n.free_gb!=null&&n.free_gb>20?'ok':'warn'}"></span>${n.free_gb!=null?n.free_gb+' GB libres':'espacio ?'}</div>`;
+}
+
+function renderCallbacks(cbs){
+  const el=$('#cbs');el.innerHTML='';
+  for(const [k,v] of Object.entries(cbs)){
+    const d=document.createElement('div');d.className='cb';d.dataset.k=k;
+    d.innerHTML=`<div class="t">${v.label}</div><div class="d">${v.desc}</div>
+      <div class="ram">~${v.ram_mb} MB RAM · ${v.produces_files?'genera CSV':'solo log'}</div>`;
+    d.onclick=()=>{document.querySelectorAll('.cb').forEach(x=>x.classList.remove('sel'));
+      d.classList.add('sel');SELECTED=k;};
+    el.appendChild(d);
+  }
+}
+
+$('#run').onclick=async()=>{
+  if(!SELECTED){showError('Elegí un callback primero.');return;}
+  const body={callback:SELECTED};
+  const s=$('#start').value, e=$('#end').value;
+  if(s!=='')body.start=+s; if(e!=='')body.end=+e;
+  $('#run').disabled=true;
+  try{
+    const r=await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json();
+    if(!r.ok){showError(j.detail||'No se pudo iniciar el job.');$('#run').disabled=false;return;}
+    watch(j.id);
+  }catch(err){showError('Error de red: '+err);$('#run').disabled=false;}
+};
+
+function watch(id){
+  CURRENT=id;
+  $('#liveCard').style.display='block';
+  $('#barFill').style.width='0%';
+  $('#liveLog').textContent='';$('#liveFiles').innerHTML='';
+  if(ES)ES.close();
+  ES=new EventSource('/api/jobs/'+id+'/events');
+  ES.onmessage=ev=>{
+    const d=JSON.parse(ev.data);
+    $('#barFill').style.width=(d.progress||0)+'%';
+    $('#liveState').textContent=`${d.state} · ${(d.progress||0).toFixed(1)}%`+(d.speed?` · ${Math.round(d.speed)} blk/s`:'');
+    $('#liveEta').textContent=d.eta_min!=null?`ETA ~${d.eta_min} min`:'';
+    if(d.log)$('#liveLog').textContent=d.log.join('\n');
+    $('#liveLog').scrollTop=$('#liveLog').scrollHeight;
+    if(d.error)showError(d.error);
+    if(d.files&&d.files.length){
+      $('#liveFiles').innerHTML=d.files.map(f=>
+        `<a href="/api/jobs/${id}/download/${encodeURIComponent(f.name)}">${f.name} · ${f.size_mb} MB</a>`).join('');
+    }
+    if(['done','error','cancelled'].includes(d.state)){
+      ES.close();$('#run').disabled=false;loadJobs();
+    }
+  };
+}
+
+$('#cancel').onclick=()=>{if(CURRENT)fetch('/api/jobs/'+CURRENT+'/cancel',{method:'POST'});};
+
+async function loadJobs(){
+  const jobs=await api('/jobs');
+  const el=$('#jobs');
+  if(!jobs.length){el.innerHTML='<div class="empty">Sin jobs todavía.</div>';return;}
+  el.innerHTML=jobs.map(j=>{
+    const files=(j.files||[]).map(f=>
+      `<a href="/api/jobs/${j.id}/download/${encodeURIComponent(f.name)}">${f.name} · ${f.size_mb} MB</a>`).join('');
+    return `<div class="job"><div class="top">
+        <span><b>${j.callback}</b>${j.start!=null||j.end!=null?` · [${j.start??0} → ${j.end??'tip'}]`:''}</span>
+        <span class="tag ${j.state}">${j.state}</span></div>
+        ${files?`<div class="files">${files}</div>`:''}</div>`;
+  }).join('');
+}
+
+loadMeta(); loadJobs();
+</script>
+</body>
+</html>

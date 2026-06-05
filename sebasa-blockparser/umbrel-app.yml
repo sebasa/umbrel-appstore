@@ -1,0 +1,37 @@
+manifestVersion: 1
+id: blockparser-gui
+category: bitcoin
+name: Blockparser GUI
+version: "1.0.0"
+tagline: Exportá datos crudos de tu blockchain a CSV con un par de clicks
+description: >-
+  Interfaz gráfica sobre rusty-blockparser (fork sebasa/blockparser 0.12.5).
+  Lee directamente los archivos blk*.dat de tu Bitcoin Node y exporta datos
+  a CSV mediante callbacks. Esta build incluye solo los callbacks livianos
+  en RAM, pensados para correr en hardware modesto (Raspberry Pi 8 GB):
+
+
+  - simplestats — estadísticas de la cadena (no genera archivos)
+
+  - opreturn — payloads OP_RETURN legibles como UTF-8
+
+  - sigdump — firmas ECDSA, claves públicas y message hashes (análisis de nonces)
+
+  - csvdump — export completo a CSV (¡ojo con el espacio en disco!)
+
+
+  Los callbacks unspentcsvdump y balances quedan deshabilitados porque
+  requieren ~18 GB de RAM.
+developer: sebasa
+website: https://github.com/sebasa/blockparser
+dependencies:
+  - bitcoin
+repo: https://github.com/sebasa/blockparser
+support: https://github.com/sebasa/blockparser/issues
+port: 7899
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: sebasa
+submission: ""

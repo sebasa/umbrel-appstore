@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: blockparser-gui_web_1
+      APP_PORT: 7899
+
+  web:
+    # Reemplazá por tu imagen publicada con su digest multi-arch:
+    #   image: tuusuario/blockparser-gui:1.0.0@sha256:...
+    # En tu app store podés buildear local con: build: .
+    build: .
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      # Salidas persistentes de la app (CSVs, copia del index, estado)
+      - ${APP_DATA_DIR}/data:/data
+      # Data dir del nodo Bitcoin de Umbrel, SOLO LECTURA.
+      # Verificá la variable en tu versión; si no existe, apuntá al path real:
+      #   - ${UMBREL_ROOT}/app-data/bitcoin/data/bitcoin:/bitcoin:ro
+      - ${APP_BITCOIN_DATA_DIR}:/bitcoin:ro
+    environment:
+      BITCOIN_DIR: /bitcoin
+      DATA_DIR: /data
+      # Límite de RAM defensivo: si un job intenta superar esto, lo bloqueamos.
+      MAX_RAM_MB: "1500"
