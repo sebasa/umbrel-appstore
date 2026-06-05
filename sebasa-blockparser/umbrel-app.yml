@@ -1,5 +1,5 @@
 manifestVersion: 1
-id: blockparser-gui
+id: sebasa-blockparser
 category: bitcoin
 name: Blockparser GUI
 version: "1.0.0"
