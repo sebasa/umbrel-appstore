@@ -1,0 +1,365 @@
+<!doctype html>
+<html>
+<head>
+  <title>WarpWallet - deterministic bitcoin wallet generator</title>
+  <meta charset="utf-8">
+</head>
+
+<script type="text/javascript">
+
+ // ---------------------------------------------------------------
+ //
+ // Hello, WarpWallet friend!
+ //
+ // If you are saving an offline copy of this file
+ // and would like your salt always pre-filled for
+ // convenience, assign the default value here. You
+ // don't have to stick to the email format in that case.
+ //
+ // A salt shouldn't make you lazy with your passphrase, of course.
+ //
+ //   @maxtaco and @malgorithms
+ //
+ // ---------------------------------------------------------------
+
+ var SALT_DEFAULT = null; // assign a string and save this file.
+
+</script>
+<!--
+
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Please send donations to bitaddress.org, not to us. WarpWallet is inspired by their project and includes some
+  of their code.
+
+      1NiNja1bUmhSoTXozBRBEtR8LeF9TGbZBN
+
+  This project, software and embedded resources are copyright CrashMix LLC ("maxchris" -> "crashmix"; get it?)
+
+  The WarpWallet name and logo are not part of the open source license.
+
+  Portions of the all-in-one HTML document contain JavaScript codes that are the copyrights of others.
+  The individual copyrights are included throughout the document along with their licenses.
+  Included JavaScript libraries are separated with HTML script tags.
+
+  JavaScript block      License
+  *******************   ***************
+  jQuery                https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt
+  bootstrap (CSS)       https://github.com/twbs/bootstrap/blob/master/LICENSE
+  browserify            https://github.com/substack/node-browserify/blob/master/LICENSE
+  qrcode.js             MIT (http://davidshimjs.github.io/qrcodejs/)
+  bitaddress.org        https://github.com/pointbiz/bitaddress.org/blob/master/README (MIT)
+    - CryptoJS          https://code.google.com/p/crypto-js/wiki/License (BSD)
+    - JSBN              http://www-cs-students.stanford.edu/~tjw/jsbn/LICENSE (BSD)
+    - Bitcoin           https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/LICENSE (MIT)
+    - EllipticCurve     BSD
+
+  In turn, bitaddress.org has some inline dependencies, which it references
+
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  WarpWallet is available under the BSD-3 License
+
+  Copyright (c) 2013, CrashMix LLC
+
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+  3. Neither the name of CrashMix nor WarpWallet, nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<script type="text/javascript">
+{::src/js/qrcode.js::}
+</script>
+
+<script type="text/javascript">
+{::src/js/jquery-1.10.2.min.js::}
+</script>
+
+<script type="text/javascript">
+window.params  = {::src/json/params.json::};
+window.package = {::package.json::};
+</script>
+
+<script type="text/javascript">
+{::src/coffee/site.coffee::}
+</script>
+
+<script type="text/javascript">
+{::src/js/deps.js::}
+</script>
+
+<style>
+{::src/css/bootstrap.min.css::}
+</style>
+
+<style>
+{::src/css/site.css::}
+</style>
+
+
+<!-- ########################################################################################## -->
+
+<body>
+
+<div class="container">
+
+  <div class="row">
+    <div class="col-md-12">
+      <h1>Warp<span class="second-half">Wallet</span></h1>
+      <form class="form-horizontal form-container" role="form">
+        <div class="form-group">
+          <label for="passphrase" class="col-md-4 control-label">Passphrase</label>
+          <div class="col-md-8">
+            <input id="passphrase" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="salt" class="col-md-4 control-label salt-label">Optional: your email [<a class="what-salt" href="#what-salt">as a salt</a>]</label>
+          <div class="col-md-8">
+            <input id="salt" class="form-control">
+          </div>
+        </div>
+        <div class="form-group salt-confirm chefckbox" style="display:none;">
+          <div class="col-md-8 col-md-offset-4">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" id="checkbox-salt-confirm"> Sanity check: I confirm <span class="salt-summary"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group salt-explanation" style="display:none;">
+          <div class="col-md-8 col-md-offset-4">
+            <p>
+                WarpWallet can use your email address as extra seed data to make your wallet stronger. If you're unsure, please
+                do it. If you want to know more, read how we "salt" in the footer of this page.
+                [<a class="what-salt" href="#what-salt">Ok</a>]
+            </p>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-md-8 col-md-offset-4">
+            <button type="button" class="btn btn-success" id="btn-submit" disabled="true">Please enter a passphrase</button>
+            <button type="button" class="btn btn-danger" id="btn-reset">Clear &amp; reset</button>
+          </div>
+        </div>
+        <div class="form-group progress-form" style="display:none;">
+          <div class="bar" style="width:10%;">
+            <span class="progress-scrypt"></span>
+            <span class="progress-pbkdf2"></span>
+          </div>
+        </div>
+        <div class="output-form" style="display:none;">
+          <div class="form-group">
+            <label for="public-address" class="col-md-4 control-label">Public bitcoin address</label>
+            <div class="col-md-8">
+              <input id="public-address" readonly class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="private-key" class="col-md-4 control-label">Private key <span class="sub-label">(don't share)</span></label>
+            <div class="col-md-8">
+              <input id="private-key" readonly class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-md-6">
+              <h5>Public address QR Code</h5>
+              <div id="public-address-qr"></div>
+            </div>
+            <div class="col-md-6 col-private-key-qr">
+              <h5>Private key QR Code (Wallet Import Format)</h5>
+              <div id="private-key-qr"></div>
+            </div>
+
+          </div>
+        </div>
+      </form>
+    </div>
+  </div><!-- /row -->
+</div><!-- /container -->
+
+<div class="footer">
+
+  <div class="container">
+    <div class="row sub-row">
+      <div class="col col-md-4">
+        <h4>What is WarpWallet?</h4>
+        <p>
+          WarpWallet is a deterministic bitcoin address generator. You never have to save
+          or store your private key anywhere. Just pick a really good password - many random words, for example - and never use it
+          for anything else.
+        </p>
+        <p>
+          This page is self-contained for portability. Save it on your computer - all the JS, CSS, and images are embedded. It's also <a href="https://github.com/keybase/warpwallet">hosted on github</a>.
+        </p>
+        <p>
+          This is not an original idea. <a href="https://www.bitaddress.org/">bitaddress.org's brainwallet</a>
+          is our inspiration.
+        </p>
+        <p>
+          WarpWallet adds two improvements: (1) WarpWallet uses <a href="http://www.tarsnap.com/scrypt.html">scrypt</a> to make address generation both memory and time-intensive. And (2) you can "salt" your passphrase with your email address.  Though salting is optional, we recommend it.  Any attacker of WarpWallet addresses would have to target you individually, rather than netting you in a wider, generic sweep.  And your email is trivial to remember, so why not?
+        </p>
+        <p>
+          For safety, we've implemented WarpWallet outside of JavaScript and confirmed it generates the same output. (It's a step in our test suite, and we publish our <a href="https://github.com/keybase/warpwallet/blob/master/test/spec.json">test vectors</a> along with the source.) If you're a programmer and want to implement WarpWallet yourself...
+        </p>
+
+        <table class="table table-condensed" style="font-size:1.0em;">
+          <tr><td valign="top" align="right">s<sub>1</sub></td>     <td valign="top">=</td><td valign="top" align="left">scrypt(key=(passphrase||<tt>0x1</tt>), salt=(salt||<tt>0x1</tt>), N=2<sup>18</sup>, r=8, p=1, dkLen=32)</td></tr>
+          <tr><td valign="top" align="right">s<sub>2</sub></td>     <td valign="top">=</td><td valign="top" align="left">pbkdf2(key=(passphrase||<tt>0x2</tt>), salt=(salt||<tt>0x2</tt>), c=2<sup>16</sup>, dkLen=32, prf=HMAC_SHA256)</td></tr>
+          <tr><td valign="top" align="right">keypair</td><td valign="top">=</td><td valign="top" align="left">generate_bitcoin_keypair(s<sub>1</sub> &oplus; s<sub>2</sub>)</td></tr>
+        </table>
+
+      </div>
+      <div class="col col-md-4">
+        <h4>WarpWallet Challenge</h4>
+        <p>
+          The following challenges are designed to test the safety of WarpWallet, and scrypt in general.
+          We expect the first 4 to fall quickly and hope to lose our bitcoins
+          to nice people.  If challenge 5 falls, we'll make an announcement
+          here and on twitter (<a href="https://twitter.com/maxtaco">@maxtaco</a>, <a href="https://twitter.com/malgorithms">@malgorithms</a>).
+        </p>
+        <p>
+          All these challenges are with unsalted passphrases. Salt yours! They're harder to lick.
+        </p>
+
+        <div class="challenge">
+
+          <h5>Challenge 1</h5>
+          <ul>
+            <li><b>reward</b>: <span class="reward-amount-solved">0.1 BTC</span></li>
+            <li>
+              <b>hint</b>: this passphrase is 2 random alphanumeric characters, such as 'X9'.
+            </li>
+            <li><b>wallet</b>: <a class="wallet-link" href="https://blockchain.info/address/1JKb1617p68H5MPkoNaMtaJCqKDU3h8qSn" target="_new">1JKb1617p68H5MPkoNaMtaJCqKDU3h8qSn</a></li>
+            <li><b>status</b>: <span class="solved">solved</span></li>
+            <li><b>expires</b>: never</li>
+          </ul>
+        </div>
+
+
+        <div class="challenge">
+          <h5>Challenge 2</h5>
+          <ul>
+            <li><b>reward</b>: <span class="reward-amount-solved">0.25 BTC</span></li>
+            <li>
+              <b>hint</b>: this passphrase is 3 random alphanumeric characters, such as 'Xa2'.
+            </li>
+            <li><b>wallet</b>: <a class="wallet-link" href="https://blockchain.info/address/1NMjXhB2DW8pbGvd64o9DiqwCF8BTAkJKu" target="_new">1NMjXhB2DW8pbGvd64o9DiqwCF8BTAkJKu</a></li>
+            <li><b>status</b>: <span class="solved">solved</span></li>
+            <li><b>expires</b>: never</li>
+          </ul>
+        </div>
+
+        <div class="challenge">
+          <h5>Challenge 3</h5>
+          <ul>
+            <li><b>reward</b>: <span class="reward-amount-solved">0.5 BTC</span></li>
+            <li>
+              <b>hint</b>: this passphrase is the usernames of two who've posted on the <a href="http://www.reddit.com/r/Bitcoin">Bitcoin subreddit</a>, separated by a space.
+            </li>
+            <li><b>wallet</b>: <a class="wallet-link" href="https://blockchain.info/address/1FpxSs3tsvV8knTgRv2885bE1GyPq1QrvH" target="_new">1FpxSs3tsvV8knTgRv2885bE1GyPq1QrvH</a></li>
+            <li><b>status</b>: <span class="solved">solved</span> [<a href="http://www.reddit.com/r/Bitcoin/comments/1rla6w/after_8_days_of_bruteforcing_the_rbitcoin/">link</a>]</li>
+            <li><b>expires</b>: January 1, 2015</li>
+          </ul>
+        </div>
+
+
+        <div class="challenge">
+          <h5>Challenge 4</h5>
+          <ul>
+            <li><b>reward</b>: <span class="reward-amount-solved">1.0 BTC</span></li>
+            <li>
+              <b>hint</b>: This passphrase is the username of someone in the Hacker News top 100 karma
+              list <a href="https://keybase.io/warp/hacker_news_100.txt">as of November 19, 2013</a>.  However, we dropped 2 characters from his or her username.
+            </li>
+            <li><b>wallet</b>: <a class="wallet-link" href="https://blockchain.info/address/1GXXH7FbY7nCJDRc72SMyYykgtEUi5GxfR" target="_new">1GXXH7FbY7nCJDRc72SMyYykgtEUi5GxfR</a></li>
+            <li><b>status</b>: <span class="solved">solved</span> [<a href="https://news.ycombinator.com/item?id=6765801">link</a>]</li>
+            <li><b>expires</b>: January 1, 2015</li>
+          </ul>
+        </div>
+
+        <p>
+          And finally, the real challenge...
+        </p>
+
+        <div class="challenge">
+          <h5>The WarpWallet Challenge 1</h5>
+          <ul>
+            <li><b>reward</b>: <span class="reward-amount">20.0 BTC*</span></li>
+            <li>
+              <b>the answer was</b>: 'PuACRv0R'
+            </li>
+            <li><b>wallet</b>: <a class="wallet-link" href="https://blockchain.info/address/1AdU3EcimMFN7JLJtceSyrmFYE3gF5ZnGj" target="_new">1AdU3EcimMFN7JLJtceSyrmFYE3gF5ZnGj</a></li>
+            <li><b>status</b>: <span class="solved">Expired/unsolved</span></li>
+            <li><b>expired on</b>: Feb 1, 2016. Come on, guys!</li>
+            </ul>
+            </div>
+
+        <div class="challenge">
+          <h5>The WarpWallet Challenge 2</h5>
+          <ul>
+            <li><b>reward</b>: <span class="reward-amount">20.0 BTC*</span></li>
+            <li>
+              <b>hint</b>: this passphrase is 8 characters long, only alphanumerics. For example, 'b234FEzz'. the salt is <tt>a@b.c</tt>
+            </li>
+            <li><b>wallet</b>: <a class="wallet-link" href="https://blockchain.info/address/1MkupVKiCik9iyfnLrJoZLx9RH4rkF3hnA" target="_new">1MkupVKiCik9iyfnLrJoZLx9RH4rkF3hnA</a></li>
+            <li><b>status</b>: <span class="unbroken">Unsolved</span></li>
+            <li><b>expires on</b>: Jan 1, 2018</li>
+            <li><b>note</b>: * we put half the prize in the private wallet, and expect to hear from the winner privately, so we can talk
+              about his/her technique. The other half we will send privately.</li>
+          </ul>
+        </div>
+      </div>
+
+
+      <div class="col col-md-4">
+        <h4>Authors</h4>
+        <p>
+          We are <a href="https://twitter.com/maxtaco">Max Krohn</a> and
+          <a href="https://twitter.com/malgorithms">Chris Coyne</a>, co-founders
+          of OkCupid, SparkNotes, and a bunch of other toys. Good day to you! We recently left OkCupid after 9 years, so we
+          have a lot of time on our hands. Please follow us on twitter if you care to hear about this kind of thing.
+        </p>
+        <p>
+          But enough with the pleasantries: you can always see our signed version history at <a href="https://keybase.io/warp/release.txt">https://keybase.io/warp/release.txt</a> (signed with
+          our <a href="https://keybase.io/warp/keybase-code-signing-key-2013.asc">PGP key</a>).
+        </p>
+        <p>
+          <i>WarpWallet</i> is of course offered without any warranty of any kind;
+          if you lose your bitcoins due to a bug in our software, your keystrokes being
+          recorded on a malware-infested XP rig from 2003, a weak passphrase, or even a typo,
+          we are sorry in the most respectful way, but we cannot help you. Of course if you're messing around with bitcoins, you
+          know how dangerous it is.
+        </p>
+        <p>
+          Consider using an air-gapped computer when generating bitcoin addresses. The nice thing about WarpWallet is you don't have to worry
+          about concealing your private key afterwards. Just don't forget your password.
+        </p>
+
+      </div><!-- /footer column -->
+    </div>
+    <hr>
+    <br /><br /><br />
+    <div style="text-align:center;">
+      <img src={::src/img/rocket.png::}>
+      <br /><br />
+      <script>document.write(package.version)</script> - CrashMix 2013<br />
+      <a href="https://keybase.io/warp/keybase-code-signing-key-2013.asc">PGP Key
+        (222B 85B0 F90B E2D2 4CFE  B93F 4748 4E50 656D 16C7)</a><br />
+      <a href="https://keybase.io/warp/release.txt">Signed Version History</a> &nbsp; &nbsp;
+    </div>
+    <br /><br /><br />
+  </div><!-- /container -->
+
+</div><!-- /footer -->
+
+</body>

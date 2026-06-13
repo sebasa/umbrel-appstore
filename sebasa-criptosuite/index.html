@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cripto Suite Bitcoin</title>
+<style>
+:root{
+  --bg:#0b0d10; --bg2:#10141a; --panel:#0e1217; --line:#1c232c;
+  --ink:#dfe7ef; --dim:#7d8a99; --faint:#4a5563;
+  --accent:#f2a900; --accent-dim:#7a5600; --ok:#3fb950; --warn:#e3b341; --danger:#ff6b6b;
+  --mono:ui-monospace,"Cascadia Code","JetBrains Mono","SF Mono",Menlo,Consolas,monospace;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:14px; -webkit-font-smoothing:antialiased}
+.app{display:grid; grid-template-columns:248px 1fr; height:100vh}
+
+/* Sidebar */
+.sidebar{border-right:1px solid var(--line); background:var(--bg2); display:flex; flex-direction:column}
+.brand{padding:20px 18px 14px; border-bottom:1px solid var(--line)}
+.brand .logo{font-family:var(--mono); font-weight:700; letter-spacing:.08em; font-size:15px}
+.brand .logo b{color:var(--accent)}
+.brand .sub{color:var(--dim); font-size:11px; margin-top:3px}
+.netled{margin:12px 18px; font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:6px 10px; border:1px solid var(--line); border-radius:6px; width:max-content}
+.netled.offline{color:var(--ok); border-color:#1d3a26; background:#0c160f}
+.netled.online{color:var(--warn); border-color:#3a3318; background:#16130a}
+#tabbar{padding:6px; display:flex; flex-direction:column; gap:2px; overflow:auto}
+.tab-group{font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:var(--faint); padding:14px 12px 5px}
+#tabbar button{display:flex; align-items:center; gap:9px; width:100%; text-align:left; cursor:pointer;
+  background:transparent; border:0; color:var(--dim); padding:10px 12px; border-radius:7px; font-size:13.5px; transition:.12s}
+#tabbar button .ic{font-size:12px; opacity:.85}
+#tabbar button:hover{background:#161b22; color:var(--ink)}
+#tabbar button.active{background:#161d12; color:var(--ink); box-shadow:inset 2px 0 0 var(--accent)}
+.sidebar .foot{margin-top:auto; padding:14px 18px; border-top:1px solid var(--line); color:var(--faint); font-size:10.5px; line-height:1.6}
+.sidebar .foot code{color:var(--accent); font-family:var(--mono)}
+
+/* Panel + iframes */
+.stage{position:relative; background:#fff}
+.toolframe{position:absolute; inset:0; width:100%; height:100%; border:0; background:#fff; display:none}
+.toolframe.active{display:block}
+.about{position:absolute; inset:0; display:none; overflow:auto; background:var(--bg); color:var(--ink); padding:34px 40px}
+.about.active{display:block}
+.about h2{font-size:19px; margin:0 0 14px}
+.about h3{font-size:13px; letter-spacing:.04em; color:var(--accent); margin:22px 0 8px; text-transform:uppercase}
+.about p{max-width:760px; line-height:1.65; color:#c4ccd6}
+.about code{font-family:var(--mono); background:#0e1217; border:1px solid var(--line); padding:1px 6px; border-radius:4px; color:var(--accent); font-size:12.5px}
+.about .warn{color:var(--warn)} .about .danger{color:var(--danger)} .about .dim{color:var(--dim)}
+.about table{border-collapse:collapse; margin:10px 0; font-size:13px}
+.about td,.about th{border:1px solid var(--line); padding:8px 12px; text-align:left}
+.about th{background:var(--bg2); color:var(--dim); font-weight:600}
+
+.banner{position:absolute; top:0; left:0; right:0; z-index:3; background:#0c160f; border-bottom:1px solid #1d3a26;
+  color:var(--ok); font-family:var(--mono); font-size:11.5px; padding:7px 14px; display:flex; gap:14px; align-items:center}
+.banner.hidden{display:none}
+.banner b{color:var(--accent)} .banner .x{margin-left:auto; cursor:pointer; color:var(--dim); border:0; background:0}
+.stage.with-banner .toolframe{top:34px; height:calc(100% - 34px)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"><b>◆</b> CRIPTO·SUITE</div>
+      <div class="sub">herramientas offline</div>
+    </div>
+    <div class="netled" id="netled">● comprobando…</div>
+    <nav id="tabbar">
+      <div class="tab-group">OFFLINE · sin red</div>
+      <button data-tool="bip39" data-src="tools/bip39/index.html" class="active"><span class="ic">⬡</span>BIP39 / HD <span style="margin-left:auto;font-size:10px;color:var(--faint)">iancoleman</span></button>
+      <button data-tool="coinbin" data-src="tools/coinbin/index.html"><span class="ic">⬢</span>Wallet / TX <span style="margin-left:auto;font-size:10px;color:var(--faint)">coinbin</span></button>
+      <button data-tool="signature" data-src="tools/bitcoin-signature-tool/index.html"><span class="ic">✎</span>Firmar mensajes <span style="margin-left:auto;font-size:10px;color:var(--faint)">ReinProject</span></button>
+      <button data-tool="warpwallet" data-src="tools/warpwallet-1.0.8/web/warp_1.0.8_SHA256_5111a723fe008dbf628237023e6f2de72c7953f8bb4265d5c16fc9fd79384b7a.html"><span class="ic">⚡</span>WarpWallet <span style="margin-left:auto;font-size:10px;color:var(--faint)">keybase</span></button>
+      <button data-tool="bitaddress" data-src="tools/bitaddress.org-3.3.0/bitaddress.org.html"><span class="ic">◉</span>Direcciones / Paper <span style="margin-left:auto;font-size:10px;color:var(--faint)">bitaddress</span></button>
+      <button data-tool="mnemonic" data-src="tools/mnemonic-offline-tool-master/index.html"><span class="ic">⊟</span>Mnemónico avanzado <span style="margin-left:auto;font-size:10px;color:var(--faint)">bitaps</span></button>
+      <div class="tab-group">INFO</div>
+      <button data-tool="about"><span class="ic">ⓘ</span>Acerca / seguridad</button>
+    </nav>
+    <div class="foot">
+      Cada herramienta corre en un <code>&lt;iframe sandbox&gt;</code>, aisladas entre sí.<br>
+      Código original sin modificar.<br>
+      Servir con <code>python3 -m http.server</code>.
+    </div>
+  </aside>
+
+  <main class="stage with-banner" id="stage">
+    <div class="banner" id="banner">
+      <span><b>⛇</b> Suite ensamblada por iframes aislados. La garantía offline es <b>operacional</b>: usá esta suite sin conexión / air-gapped.</span>
+      <button class="x" onclick="document.getElementById('banner').classList.add('hidden');document.getElementById('stage').classList.remove('with-banner')">✕</button>
+    </div>
+
+    <iframe id="f-bip39" class="toolframe active"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <iframe id="f-coinbin" class="toolframe"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <iframe id="f-signature" class="toolframe"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <iframe id="f-warpwallet" class="toolframe"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <iframe id="f-bitaddress" class="toolframe"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <iframe id="f-mnemonic" class="toolframe"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+
+    <section class="about" id="about-panel">
+      <h2>Cripto Suite — herramientas Bitcoin offline</h2>
+      <p>Cada proyecto open-source corre <b>tal cual upstream</b>, en su propio <code>&lt;iframe sandbox&gt;</code>.
+      El aislamiento entre herramientas se mantiene porque cada una corre en su propio subdirectorio y no comparte
+      estado con las otras.</p>
+
+      <h3>Herramientas incluidas</h3>
+      <table>
+        <tr><th>Pestaña</th><th>Proyecto</th><th>Función</th></tr>
+        <tr><td>BIP39 / HD</td><td>iancoleman/bip39</td><td>Mnemónico → semilla → direcciones (standalone)</td></tr>
+        <tr><td>WarpWallet</td><td>keybase/warpwallet</td><td>Cartera determinista desde frase + sal (scrypt + PBKDF2)</td></tr>
+        <tr><td>Wallet / TX</td><td>OutCast3k/coinbin</td><td>Direcciones, multisig, construir/firmar transacciones, broadcast</td></tr>
+        <tr><td>Firmar mensajes</td><td>ReinProject/bitcoin-signature-tool</td><td>Firmar / verificar mensajes con clave Bitcoin</td></tr>
+        <tr><td>Direcciones / Paper</td><td>pointbiz/bitaddress.org</td><td>Generar claves, paper wallet, bulk, vanity, split</td></tr>
+        <tr><td>Mnemónico avanzado</td><td>bitaps-com/mnemonic-offline-tool</td><td>Dados, split/restore, XPUB/XPRIV, BIP44/49/84</td></tr>
+      </table>
+
+      <h3>Notas de seguridad</h3>
+      <p>• <span class="warn">RNG:</span> signature-tool y coinbin usan librerías de ~2013 para generación de claves.
+      Para <b>generar</b> claves nuevas preferir BIP39, WarpWallet, bitaddress o mnemonic-offline-tool que usan
+      <code>crypto.getRandomValues</code>. Para <b>firmar/verificar/derivar</b> con claves existentes el riesgo es menor.</p>
+      <p>• <span class="warn">Offline:</span> la garantía es operacional. coinbin puede hacer llamadas de red
+      (broadcast/fees) que fallarán sin conexión. Usar siempre sin conexión / air-gapped para material de claves.</p>
+      <p>• Los iframes <code>file://</code> pueden bloquear subrecursos en Chrome: servir siempre vía HTTP
+      (Docker o <code>python -m http.server</code>).</p>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  const tabs = document.querySelectorAll('#tabbar button');
+  const frames = { bip39:document.getElementById('f-bip39'), coinbin:document.getElementById('f-coinbin'), signature:document.getElementById('f-signature'), warpwallet:document.getElementById('f-warpwallet'), bitaddress:document.getElementById('f-bitaddress'), mnemonic:document.getElementById('f-mnemonic') };
+  const about = document.getElementById('about-panel');
+
+  function activate(name){
+    tabs.forEach(b=>b.classList.toggle('active', b.dataset.tool===name));
+    about.classList.toggle('active', name==='about');
+    Object.entries(frames).forEach(([k,f])=>f.classList.toggle('active', k===name));
+  }
+  tabs.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const name=b.dataset.tool, src=b.dataset.src;
+      // Lazy: cargar el iframe solo la primera vez, luego conservar estado.
+      if(src && frames[name] && !frames[name].src) frames[name].src=src;
+      activate(name);
+    });
+  });
+  // Cargar el primero
+  frames.bip39.src='tools/bip39/index.html';
+
+  // Indicador de red
+  fetch('https://mempool.space/api/blocks/tip/height',{method:'HEAD',mode:'no-cors'})
+    .then(()=>{const l=document.getElementById('netled'); l.textContent='● ONLINE'; l.className='netled online';})
+    .catch(()=>{const l=document.getElementById('netled'); l.textContent='● OFFLINE · sin red'; l.className='netled offline';});
+})();
+</script>
+</body>
+</html>

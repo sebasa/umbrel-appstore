@@ -1,0 +1,8 @@
+version: "3.7"
+
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8777}:80"

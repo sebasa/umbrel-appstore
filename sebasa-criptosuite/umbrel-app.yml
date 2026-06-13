@@ -1,0 +1,25 @@
+manifestVersion: 1.1
+id: sebasa-criptosuite
+disabled: false
+name: Cripto Suite Bitcoin
+tagline: Herramientas Bitcoin offline en iframes aislados
+icon: ""
+category: bitcoin
+version: "1.0.0"
+port: 8777
+description: >-
+  Suite de herramientas Bitcoin offline: BIP39/HD (iancoleman), WarpWallet (keybase),
+  Wallet/TX (coinbin), Firmar mensajes (ReinProject), bitaddress.org y Mnemónico
+  avanzado (bitaps). Todo corre dentro del nodo sin conexión a internet.
+releaseNotes: ""
+developer: ""
+website: ""
+dependencies: []
+repo: ""
+support: ""
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: ""
+submission: ""
