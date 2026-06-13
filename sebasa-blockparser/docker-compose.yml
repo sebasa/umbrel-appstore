@@ -7,7 +7,7 @@ services:
       APP_PORT: 7899
 
   web:
-    image: sebasa/blockparser-gui:1.0.1@sha256:sha256:91c49abf392aa48a64f99bfaa4b436b092c7533182602d52f9d714a9282a0194
+    image: sebasa/blockparser-gui:1.0.1@sha256:91c49abf392aa48a64f99bfaa4b436b092c7533182602d52f9d714a9282a0194
     restart: on-failure
     stop_grace_period: 1m
     volumes:
