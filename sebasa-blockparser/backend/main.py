@@ -147,6 +147,13 @@ def prepare_view() -> Path:
             src_index, VIEW_DIR / "index",
             ignore=shutil.ignore_patterns("LOCK", "LOCK.bak", "*.bak"),
         )
+        # Belt-and-suspenders: remove any non-LevelDB files that slipped through
+        # (e.g. LOCK.bak created by bitcoind mid-copy). LevelDB fails on these.
+        dest_index = VIEW_DIR / "index"
+        for name in ("LOCK", "LOCK.bak"):
+            (dest_index / name).unlink(missing_ok=True)
+        for p in dest_index.glob("*.bak"):
+            p.unlink()
     return VIEW_DIR
 
 
