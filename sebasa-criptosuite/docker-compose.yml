@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   web:
-    build: .
+    image: sebasa/criptosuite:1.0.0@sha256:c5c9af3572757b63a4f2d44973af6912663685f2f5143f70b412da5abfde65a3
     restart: unless-stopped
     ports:
       - "${PORT:-8777}:80"
