@@ -15,10 +15,17 @@ Herramientas Bitcoin open-source corriendo sin modificar, cada una en su propio 
 
 ## Uso local (Docker)
 
-    docker-compose up -d           # construye y levanta en :8777
+El `docker-compose.yml` referencia la imagen publicada en Docker Hub. Para correr localmente hay que construir primero:
+
+    docker build -t sebasa/criptosuite:1.0.0 .
+    docker-compose up -d           # levanta en :8777
     PORT=9000 docker-compose up -d # puerto personalizado
-    docker-compose up -d --build   # reconstruir tras cambios
     docker-compose down
+
+Para reconstruir tras cambios:
+
+    docker build -t sebasa/criptosuite:1.0.0 .
+    docker-compose up -d
 
 ## Uso local (sin Docker)
 
@@ -27,29 +34,41 @@ Herramientas Bitcoin open-source corriendo sin modificar, cada una en su propio 
 
 No abrir `index.html` directamente con `file://`: Chrome bloquea subrecursos de iframes file://.
 
+## Publicar la imagen (requisito para Umbrel)
+
+Umbrel no construye imágenes localmente — solo hace `docker pull`. Por eso el `docker-compose.yml` usa `image:` en lugar de `build:`. Antes de instalar la app en Umbrel hay que tener la imagen publicada en Docker Hub:
+
+    docker build -t sebasa/criptosuite:1.0.0 .
+    docker push sebasa/criptosuite:1.0.0
+
+La imagen actual referenciada en `docker-compose.yml`:
+
+    sebasa/criptosuite:1.0.0@sha256:c5c9af3572757b63a4f2d44973af6912663685f2f5143f70b412da5abfde65a3
+
+Si publicás una nueva versión, actualizá el tag y el digest en `docker-compose.yml` y en `umbrel-app.yml`.
+
 ## Umbrel
 
-La carpeta `umbrel/cripto-suite/` está lista para copiar al repositorio de tu app store:
+La estructura del app store ya está lista:
 
-    <tu-app-store>/
-      umbrel-app-store.yml
-      cripto-suite/               ← copiar esta carpeta
-        umbrel-app.yml
-        docker-compose.yml
+    sebasa-criptosuite/
+      umbrel-app.yml
+      docker-compose.yml    ← usa image:, no build:
+      index.html
+      Dockerfile
+      tools/
 
-El `docker-compose.yml` de Umbrel referencia una imagen publicada en un registro.
-Para publicar la imagen desde este proyecto:
+Para agregar al app store en Umbrel:
 
-    docker build -t ghcr.io/tuusuario/cripto-suite:1.0.0 .
-    docker push ghcr.io/tuusuario/cripto-suite:1.0.0
-
-Luego reemplazar `youruser` en `umbrel/cripto-suite/docker-compose.yml` con tu usuario.
+1. Publicar la imagen: `docker build + docker push` (ver arriba)
+2. Agregar este repositorio como Community App Store en Umbrel
+3. Instalar desde la tienda
 
 ## Estructura del proyecto
 
     index.html                              shell (sidebar + iframes)
     Dockerfile                              nginx:alpine con los archivos
-    docker-compose.yml                      levanta localmente (build local)
+    docker-compose.yml                      referencia imagen publicada (Umbrel / prod)
     serve.py                                alternativa sin Docker
     tools/
       bip39/                                iancoleman/bip39
@@ -58,14 +77,11 @@ Luego reemplazar `youruser` en `umbrel/cripto-suite/docker-compose.yml` con tu u
       bitcoin-signature-tool/              ReinProject/bitcoin-signature-tool
       bitaddress.org-3.3.0/               pointbiz/bitaddress.org
       mnemonic-offline-tool-master/        bitaps-com/mnemonic-offline-tool
-    umbrel/
-      cripto-suite/                         copiar al app store de Umbrel
-        umbrel-app.yml
-        docker-compose.yml
 
 ## Agregar otra herramienta
 
 1. Copiar el proyecto en `tools/<nombre>/`
 2. Agregar un `<button data-tool data-src>` y un `<iframe id="f-nombre">` en `index.html`
 3. Extender el objeto `frames` en el script de `index.html`
-4. Reconstruir: `docker-compose up -d --build`
+4. Reconstruir y republicar: `docker build -t sebasa/criptosuite:<nueva-version> . && docker push ...`
+5. Actualizar el tag en `docker-compose.yml` y `umbrel-app.yml`
