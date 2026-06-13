@@ -124,12 +124,22 @@ def node_status() -> dict:
     return status
 
 
+_LDBFILE_RE = re.compile(r'^\d+\.ldb$|^MANIFEST-\d+$|^CURRENT$')
+
+
 def prepare_view() -> Path:
     """
     Arma /data/_blocks_view con:
       - symlinks a cada blk*.dat / rev*.dat de /bitcoin/blocks (read-only, inmutables)
-      - copia real del subdir index/ (para no tocar el lock de bitcoind)
-    Devuelve el path de la vista, que se pasa a `-d`.
+      - copia SELECTIVA del subdir index/ con solo archivos LevelDB inmutables
+
+    Por qué whitelist en vez de blacklist:
+      Copiar el .log activo de bitcoind le da a LevelDB un WAL incompleto.
+      LevelDB entra en modo repair, renombra LOCK → LOCK.bak, luego falla al
+      parsear LOCK.bak ("invalid file number"). Solución: copiar solo SSTables
+      (*.ldb) + MANIFEST + CURRENT; omitir *.log. LevelDB sin log asume shutdown
+      limpio y abre sin repair. Pre-creamos LOCK vacío para que LevelDB lo tome
+      sin competir con bitcoind.
     """
     if VIEW_DIR.exists():
         shutil.rmtree(VIEW_DIR, ignore_errors=True)
@@ -140,20 +150,13 @@ def prepare_view() -> Path:
 
     src_index = BLOCKS_DIR / "index"
     if src_index.is_dir():
-        # copytree sigue una snapshot; puede quedar 1-2 bloques atrás del tip.
-        # LOCK y LOCK.bak los crea bitcoind; si los copiamos, blockparser falla
-        # al intentar parsearlos como archivos LevelDB con número de tabla.
-        shutil.copytree(
-            src_index, VIEW_DIR / "index",
-            ignore=shutil.ignore_patterns("LOCK", "LOCK.bak", "*.bak"),
-        )
-        # Belt-and-suspenders: remove any non-LevelDB files that slipped through
-        # (e.g. LOCK.bak created by bitcoind mid-copy). LevelDB fails on these.
         dest_index = VIEW_DIR / "index"
-        for name in ("LOCK", "LOCK.bak"):
-            (dest_index / name).unlink(missing_ok=True)
-        for p in dest_index.glob("*.bak"):
-            p.unlink()
+        dest_index.mkdir()
+        for f in src_index.iterdir():
+            if f.is_file() and _LDBFILE_RE.match(f.name):
+                shutil.copy2(f, dest_index / f.name)
+        # LOCK vacío → LevelDB lo bloquea sin ir a repair (que crearía LOCK.bak)
+        (dest_index / "LOCK").touch()
     return VIEW_DIR
 
 
