@@ -141,7 +141,12 @@ def prepare_view() -> Path:
     src_index = BLOCKS_DIR / "index"
     if src_index.is_dir():
         # copytree sigue una snapshot; puede quedar 1-2 bloques atrás del tip.
-        shutil.copytree(src_index, VIEW_DIR / "index")
+        # LOCK y LOCK.bak los crea bitcoind; si los copiamos, blockparser falla
+        # al intentar parsearlos como archivos LevelDB con número de tabla.
+        shutil.copytree(
+            src_index, VIEW_DIR / "index",
+            ignore=shutil.ignore_patterns("LOCK", "LOCK.bak", "*.bak"),
+        )
     return VIEW_DIR
 
 
