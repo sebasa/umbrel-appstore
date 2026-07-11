@@ -1,0 +1,127 @@
+<html>
+<head>
+  <title>browserPGP | Sign</title>
+  <meta name="description" content="Sign PGP in browser, simple and secure." />
+  <meta name="keywords" content="browserPGP,PGP,OpenPGP,online,browser,javascript,github,live,secure,key generator,key gen,encrypt,decrypt,sign,verify,signature">
+  <meta name="author" content="ar0n#1462">
+  <link rel="icon" type='image/png' sizes='256x256' href="/256.png"/>
+
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="prngCheck.js"></script>
+  <script src="favicon.js"></script>
+  <script src="sha1.min.js"></script>
+  <script src="openpgp.min.js"></script>
+  <script src="jquery.min.js"></script>
+  <script src="bootstrap.min.js"></script>
+  <script>
+
+  openpgp.initWorker({ path:'openpgp.worker.min.js' }) // set the relative web worker path
+
+  const encryptDecryptFunction = async() => {
+    document.getElementById("progressbar").className = "progress-bar progress-bar-striped progress-bar-animated";
+    // put keys in backtick (``) to avoid errors caused by spaces or tabs
+    const privkey = document.getElementById("privKey").value
+    const passphrase = document.getElementById("pass").value
+    const msg = document.getElementById("msg").value
+
+    const privKeyObj = (await openpgp.key.readArmored(privkey).catch((err) => {document.getElementById("result").value = err.message;document.getElementById("progressbar").className = "progress-bar bg-danger";})).keys[0]
+
+    if (passphrase) {
+      await privKeyObj.decrypt(passphrase).catch((err) => {document.getElementById("result").value = err.message;document.getElementById("progressbar").className = "progress-bar bg-danger";})
+    }
+
+    const options = {
+      message: openpgp.cleartext.fromText(msg), // CleartextMessage or Message object
+      privateKeys: [privKeyObj]                             // for signing
+    };
+
+    openpgp.sign(options).then(function(signed) {
+      cleartext = signed.data; // '-----BEGIN PGP SIGNED MESSAGE ... END PGP SIGNATURE-----'
+      document.getElementById("result").value = cleartext;
+      document.getElementById("progressbar").className = "progress-bar bg-success";
+    }).catch(function(error){
+      document.getElementById("result").value = error.message;
+      document.getElementById("progressbar").className = "progress-bar bg-danger";
+    });
+  }
+  </script>
+  <style>
+  html, body {
+    height: 95%;
+  }
+  div.main {
+    padding:20px;
+    height: 100%;
+  }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/">
+      <img src="/logo.svg" width="30" height="30" class="d-inline-block align-top" alt="">
+      browserPGP
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="/">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/gen.html">Key Generator</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/encrypt.html">Encrypt</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/decrypt.html">Decrypt</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="/sign.html">Sign</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/verify.html">Verify</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/compatibility.html">Compatibility</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm">
+          <div class="form-group">
+            <label for="exampleFormControlTextarea1">Message</label>
+            <textarea class="form-control" rows="6" id="msg" placeholder="Message to be signed. Don't sign anything vague as it could be used by someone to pretend to be you, include dates and specifics."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="exampleFormControlTextarea1">PGP Privkey</label>
+            <textarea class="form-control" style="font-size: 10px;" rows="10" id="privKey" placeholder="-----BEGIN PGP PRIVATE KEY BLOCK-----"></textarea>
+          </div>
+        </div>
+        <div class="col-sm">
+          <div class="form-group">
+            <label for="exampleInputEmail1">Privkey Passphrase</label>
+            <input type="password" class="form-control" id="pass" placeholder="Enter passphrase">
+          </div>
+          <div class="form-group progress">
+            <div class="progress-bar" role="progressbar" id="progressbar" style="width: 100%"></div>
+          </div>
+          <button type="button" onclick="encryptDecryptFunction()" class="btn btn-primary">Sign</button>
+        </div>
+        <div class="col-sm" style="height:100%;">
+          <div class="form-group">
+            <label for="exampleFormControlTextarea1">PGP Message</label>
+            <textarea class="form-control" style="font-size: 10px;" rows="20" placeholder="-----BEGIN PGP SIGNED MESSAGE-----" id="result" readonly></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

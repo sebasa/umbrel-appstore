@@ -74,6 +74,7 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
       <button data-tool="warpwallet" data-src="tools/warpwallet-1.0.8/web/warp_1.0.8_SHA256_5111a723fe008dbf628237023e6f2de72c7953f8bb4265d5c16fc9fd79384b7a.html"><span class="ic">⚡</span>WarpWallet <span style="margin-left:auto;font-size:10px;color:var(--faint)">keybase</span></button>
       <button data-tool="bitaddress" data-src="tools/bitaddress.org-3.3.0/bitaddress.org.html"><span class="ic">◉</span>Direcciones / Paper <span style="margin-left:auto;font-size:10px;color:var(--faint)">bitaddress</span></button>
       <button data-tool="mnemonic" data-src="tools/mnemonic-offline-tool-master/index.html"><span class="ic">⊟</span>Mnemónico avanzado <span style="margin-left:auto;font-size:10px;color:var(--faint)">bitaps</span></button>
+      <button data-tool="browserpgp" data-src="tools/browserpgp/index.html"><span class="ic">🔒</span>BrowserPGP <span style="margin-left:auto;font-size:10px;color:var(--faint)">browserPGP</span></button>
       <div class="tab-group">INFO</div>
       <button data-tool="about"><span class="ic">ⓘ</span>Acerca / seguridad</button>
     </nav>
@@ -102,6 +103,8 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
       sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
     <iframe id="f-mnemonic" class="toolframe"
       sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <iframe id="f-browserpgp" class="toolframe"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
 
     <section class="about" id="about-panel">
       <h2>Cripto Suite — herramientas Bitcoin offline</h2>
@@ -118,6 +121,7 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
         <tr><td>Firmar mensajes</td><td>ReinProject/bitcoin-signature-tool</td><td>Firmar / verificar mensajes con clave Bitcoin</td></tr>
         <tr><td>Direcciones / Paper</td><td>pointbiz/bitaddress.org</td><td>Generar claves, paper wallet, bulk, vanity, split</td></tr>
         <tr><td>Mnemónico avanzado</td><td>bitaps-com/mnemonic-offline-tool</td><td>Dados, split/restore, XPUB/XPRIV, BIP44/49/84</td></tr>
+        <tr><td>BrowserPGP</td><td>browserPGP/browserPGP.github.io</td><td>Generar claves PGP, cifrar, descifrar, firmar y verificar mensajes</td></tr>
       </table>
 
       <h3>Notas de seguridad</h3>
@@ -135,7 +139,7 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
 <script>
 (function(){
   const tabs = document.querySelectorAll('#tabbar button');
-  const frames = { bip39:document.getElementById('f-bip39'), coinbin:document.getElementById('f-coinbin'), signature:document.getElementById('f-signature'), warpwallet:document.getElementById('f-warpwallet'), bitaddress:document.getElementById('f-bitaddress'), mnemonic:document.getElementById('f-mnemonic') };
+  const frames = { bip39:document.getElementById('f-bip39'), coinbin:document.getElementById('f-coinbin'), signature:document.getElementById('f-signature'), warpwallet:document.getElementById('f-warpwallet'), bitaddress:document.getElementById('f-bitaddress'), mnemonic:document.getElementById('f-mnemonic'), browserpgp:document.getElementById('f-browserpgp') };
   const about = document.getElementById('about-panel');
 
   function activate(name){
