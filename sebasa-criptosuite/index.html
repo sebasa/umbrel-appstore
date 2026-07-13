@@ -74,7 +74,12 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
       <button data-tool="warpwallet" data-src="tools/warpwallet-1.0.8/web/warp_1.0.8_SHA256_5111a723fe008dbf628237023e6f2de72c7953f8bb4265d5c16fc9fd79384b7a.html"><span class="ic">⚡</span>WarpWallet <span style="margin-left:auto;font-size:10px;color:var(--faint)">keybase</span></button>
       <button data-tool="bitaddress" data-src="tools/bitaddress.org-3.3.0/bitaddress.org.html"><span class="ic">◉</span>Direcciones / Paper <span style="margin-left:auto;font-size:10px;color:var(--faint)">bitaddress</span></button>
       <button data-tool="mnemonic" data-src="tools/mnemonic-offline-tool-master/index.html"><span class="ic">⊟</span>Mnemónico avanzado <span style="margin-left:auto;font-size:10px;color:var(--faint)">bitaps</span></button>
-      <button data-tool="browserpgp" data-src="tools/browserpgp/index.html"><span class="ic">🔒</span>BrowserPGP <span style="margin-left:auto;font-size:10px;color:var(--faint)">browserPGP</span></button>
+      <div class="tab-group">PGP · OFFLINE</div>
+      <button data-tool="pgp-gen" data-src="tools/browserpgp/gen.html"><span class="ic">🔑</span>Generar clave <span style="margin-left:auto;font-size:10px;color:var(--faint)">browserPGP</span></button>
+      <button data-tool="pgp-encrypt" data-src="tools/browserpgp/encrypt.html"><span class="ic">🔒</span>Cifrar mensaje</button>
+      <button data-tool="pgp-decrypt" data-src="tools/browserpgp/decrypt.html"><span class="ic">🔓</span>Descifrar mensaje</button>
+      <button data-tool="pgp-sign" data-src="tools/browserpgp/sign.html"><span class="ic">✍</span>Firmar</button>
+      <button data-tool="pgp-verify" data-src="tools/browserpgp/verify.html"><span class="ic">✅</span>Verificar firma</button>
       <div class="tab-group">INFO</div>
       <button data-tool="about"><span class="ic">ⓘ</span>Acerca / seguridad</button>
     </nav>
@@ -103,7 +108,15 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
       sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
     <iframe id="f-mnemonic" class="toolframe"
       sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
-    <iframe id="f-browserpgp" class="toolframe"
+    <iframe id="f-pgp-gen" class="toolframe"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <iframe id="f-pgp-encrypt" class="toolframe"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <iframe id="f-pgp-decrypt" class="toolframe"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <iframe id="f-pgp-sign" class="toolframe"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <iframe id="f-pgp-verify" class="toolframe"
       sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
 
     <section class="about" id="about-panel">
@@ -139,7 +152,7 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
 <script>
 (function(){
   const tabs = document.querySelectorAll('#tabbar button');
-  const frames = { bip39:document.getElementById('f-bip39'), coinbin:document.getElementById('f-coinbin'), signature:document.getElementById('f-signature'), warpwallet:document.getElementById('f-warpwallet'), bitaddress:document.getElementById('f-bitaddress'), mnemonic:document.getElementById('f-mnemonic'), browserpgp:document.getElementById('f-browserpgp') };
+  const frames = { bip39:document.getElementById('f-bip39'), coinbin:document.getElementById('f-coinbin'), signature:document.getElementById('f-signature'), warpwallet:document.getElementById('f-warpwallet'), bitaddress:document.getElementById('f-bitaddress'), mnemonic:document.getElementById('f-mnemonic'), 'pgp-gen':document.getElementById('f-pgp-gen'), 'pgp-encrypt':document.getElementById('f-pgp-encrypt'), 'pgp-decrypt':document.getElementById('f-pgp-decrypt'), 'pgp-sign':document.getElementById('f-pgp-sign'), 'pgp-verify':document.getElementById('f-pgp-verify') };
   const about = document.getElementById('about-panel');
 
   function activate(name){
