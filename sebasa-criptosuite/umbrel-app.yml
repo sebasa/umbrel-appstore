@@ -5,7 +5,7 @@ name: Cripto Suite Bitcoin
 tagline: Herramientas Bitcoin offline en iframes aislados
 icon: ""
 category: bitcoin
-version: "1.0.0"
+version: "1.1.1"
 port: 8777
 description: >-
   Suite de herramientas Bitcoin offline: BIP39/HD (iancoleman), WarpWallet (keybase),

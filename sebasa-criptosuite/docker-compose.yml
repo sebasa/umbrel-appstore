@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   web:
-    image: sebasa/criptosuite:1.1.0
+    image: sebasa/criptosuite:1.1.1
     restart: unless-stopped
     ports:
       - "${PORT:-8777}:80"
