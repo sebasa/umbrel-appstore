@@ -51,11 +51,22 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
 .about td,.about th{border:1px solid var(--line); padding:8px 12px; text-align:left}
 .about th{background:var(--bg2); color:var(--dim); font-weight:600}
 
+.pgp-panel{position:absolute; inset:0; display:none; flex-direction:column}
+.pgp-panel.active{display:flex}
+.pgp-tabbar{display:flex; gap:4px; padding:8px 10px; background:var(--bg2); border-bottom:1px solid var(--line); flex-shrink:0}
+.pgp-tabbar button{cursor:pointer; background:transparent; border:0; color:var(--dim); padding:8px 14px; border-radius:6px; font-size:13px; font-family:var(--sans); transition:.12s}
+.pgp-tabbar button:hover{background:#161b22; color:var(--ink)}
+.pgp-tabbar button.active{background:#161d12; color:var(--ink); box-shadow:inset 0 -2px 0 var(--accent)}
+.pgp-frames{position:relative; flex:1}
+.pgp-iframe{position:absolute; inset:0; width:100%; height:100%; border:0; background:#fff; display:none}
+.pgp-iframe.active{display:block}
+
 .banner{position:absolute; top:0; left:0; right:0; z-index:3; background:#0c160f; border-bottom:1px solid #1d3a26;
   color:var(--ok); font-family:var(--mono); font-size:11.5px; padding:7px 14px; display:flex; gap:14px; align-items:center}
 .banner.hidden{display:none}
 .banner b{color:var(--accent)} .banner .x{margin-left:auto; cursor:pointer; color:var(--dim); border:0; background:0}
 .stage.with-banner .toolframe{top:34px; height:calc(100% - 34px)}
+.stage.with-banner .pgp-panel{top:34px; height:calc(100% - 34px)}
 </style>
 </head>
 <body>
@@ -74,12 +85,7 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
       <button data-tool="warpwallet" data-src="tools/warpwallet-1.0.8/web/warp_1.0.8_SHA256_5111a723fe008dbf628237023e6f2de72c7953f8bb4265d5c16fc9fd79384b7a.html"><span class="ic">⚡</span>WarpWallet <span style="margin-left:auto;font-size:10px;color:var(--faint)">keybase</span></button>
       <button data-tool="bitaddress" data-src="tools/bitaddress.org-3.3.0/bitaddress.org.html"><span class="ic">◉</span>Direcciones / Paper <span style="margin-left:auto;font-size:10px;color:var(--faint)">bitaddress</span></button>
       <button data-tool="mnemonic" data-src="tools/mnemonic-offline-tool-master/index.html"><span class="ic">⊟</span>Mnemónico avanzado <span style="margin-left:auto;font-size:10px;color:var(--faint)">bitaps</span></button>
-      <div class="tab-group">PGP · OFFLINE</div>
-      <button data-tool="pgp-gen" data-src="tools/browserpgp/gen.html"><span class="ic">🔑</span>Generar clave <span style="margin-left:auto;font-size:10px;color:var(--faint)">browserPGP</span></button>
-      <button data-tool="pgp-encrypt" data-src="tools/browserpgp/encrypt.html"><span class="ic">🔒</span>Cifrar mensaje</button>
-      <button data-tool="pgp-decrypt" data-src="tools/browserpgp/decrypt.html"><span class="ic">🔓</span>Descifrar mensaje</button>
-      <button data-tool="pgp-sign" data-src="tools/browserpgp/sign.html"><span class="ic">✍</span>Firmar</button>
-      <button data-tool="pgp-verify" data-src="tools/browserpgp/verify.html"><span class="ic">✅</span>Verificar firma</button>
+      <button data-tool="browserpgp"><span class="ic">🔒</span>BrowserPGP <span style="margin-left:auto;font-size:10px;color:var(--faint)">browserPGP</span></button>
       <div class="tab-group">INFO</div>
       <button data-tool="about"><span class="ic">ⓘ</span>Acerca / seguridad</button>
     </nav>
@@ -108,16 +114,27 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
       sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
     <iframe id="f-mnemonic" class="toolframe"
       sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
-    <iframe id="f-pgp-gen" class="toolframe"
-      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
-    <iframe id="f-pgp-encrypt" class="toolframe"
-      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
-    <iframe id="f-pgp-decrypt" class="toolframe"
-      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
-    <iframe id="f-pgp-sign" class="toolframe"
-      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
-    <iframe id="f-pgp-verify" class="toolframe"
-      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+    <section class="pgp-panel" id="pgp-panel">
+      <div class="pgp-tabbar" id="pgp-tabbar">
+        <button data-pgp="pgp-gen" data-src="tools/browserpgp/gen.html" class="active">🔑 Generar clave</button>
+        <button data-pgp="pgp-encrypt" data-src="tools/browserpgp/encrypt.html">🔒 Cifrar</button>
+        <button data-pgp="pgp-decrypt" data-src="tools/browserpgp/decrypt.html">🔓 Descifrar</button>
+        <button data-pgp="pgp-sign" data-src="tools/browserpgp/sign.html">✍ Firmar</button>
+        <button data-pgp="pgp-verify" data-src="tools/browserpgp/verify.html">✅ Verificar</button>
+      </div>
+      <div class="pgp-frames">
+        <iframe id="f-pgp-gen" class="pgp-iframe active"
+          sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+        <iframe id="f-pgp-encrypt" class="pgp-iframe"
+          sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+        <iframe id="f-pgp-decrypt" class="pgp-iframe"
+          sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+        <iframe id="f-pgp-sign" class="pgp-iframe"
+          sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+        <iframe id="f-pgp-verify" class="pgp-iframe"
+          sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"></iframe>
+      </div>
+    </section>
 
     <section class="about" id="about-panel">
       <h2>Cripto Suite — herramientas Bitcoin offline</h2>
@@ -152,19 +169,34 @@ body{background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:
 <script>
 (function(){
   const tabs = document.querySelectorAll('#tabbar button');
-  const frames = { bip39:document.getElementById('f-bip39'), coinbin:document.getElementById('f-coinbin'), signature:document.getElementById('f-signature'), warpwallet:document.getElementById('f-warpwallet'), bitaddress:document.getElementById('f-bitaddress'), mnemonic:document.getElementById('f-mnemonic'), 'pgp-gen':document.getElementById('f-pgp-gen'), 'pgp-encrypt':document.getElementById('f-pgp-encrypt'), 'pgp-decrypt':document.getElementById('f-pgp-decrypt'), 'pgp-sign':document.getElementById('f-pgp-sign'), 'pgp-verify':document.getElementById('f-pgp-verify') };
+  const frames = { bip39:document.getElementById('f-bip39'), coinbin:document.getElementById('f-coinbin'), signature:document.getElementById('f-signature'), warpwallet:document.getElementById('f-warpwallet'), bitaddress:document.getElementById('f-bitaddress'), mnemonic:document.getElementById('f-mnemonic') };
   const about = document.getElementById('about-panel');
+  const pgpPanel = document.getElementById('pgp-panel');
 
   function activate(name){
     tabs.forEach(b=>b.classList.toggle('active', b.dataset.tool===name));
     about.classList.toggle('active', name==='about');
+    pgpPanel.classList.toggle('active', name==='browserpgp');
     Object.entries(frames).forEach(([k,f])=>f.classList.toggle('active', k===name));
   }
+  // Sub-pestañas de BrowserPGP: navegan dentro del mismo panel, sin salir de él.
+  const pgpTabs = document.querySelectorAll('#pgp-tabbar button');
+  const pgpFrames = { 'pgp-gen':document.getElementById('f-pgp-gen'), 'pgp-encrypt':document.getElementById('f-pgp-encrypt'), 'pgp-decrypt':document.getElementById('f-pgp-decrypt'), 'pgp-sign':document.getElementById('f-pgp-sign'), 'pgp-verify':document.getElementById('f-pgp-verify') };
+  pgpTabs.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const name=b.dataset.pgp, src=b.dataset.src;
+      if(!pgpFrames[name].src) pgpFrames[name].src=src;
+      pgpTabs.forEach(x=>x.classList.toggle('active', x===b));
+      Object.entries(pgpFrames).forEach(([k,f])=>f.classList.toggle('active', k===name));
+    });
+  });
+
   tabs.forEach(b=>{
     b.addEventListener('click', ()=>{
       const name=b.dataset.tool, src=b.dataset.src;
       // Lazy: cargar el iframe solo la primera vez, luego conservar estado.
       if(src && frames[name] && !frames[name].src) frames[name].src=src;
+      if(name==='browserpgp' && !pgpFrames['pgp-gen'].src) pgpFrames['pgp-gen'].src='tools/browserpgp/gen.html';
       activate(name);
     });
   });
