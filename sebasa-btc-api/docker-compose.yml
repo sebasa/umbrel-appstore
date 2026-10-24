@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   api:
-    image: python:3.11-slim
+    image: python:3.13-slim
     restart: unless-stopped
     ports:
       - "${APP_SEBASA_BTC_API_PORT:-7891}:7891"

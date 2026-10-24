@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 LABEL org.opencontainers.image.title="Mempool Bitcoin Watcher"
 LABEL org.opencontainers.image.description="Monitor Bitcoin addresses via WebSocket and fire IPN webhooks"

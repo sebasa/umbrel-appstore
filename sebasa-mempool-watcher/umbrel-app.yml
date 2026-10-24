@@ -1,9 +1,9 @@
 manifestVersion: 1
 id: sebasa-mempool-watcher
-icon: https://raw.githubusercontent.com/sebasa/umbrel-mempool-watcher/main/sebasa-mempool-watcher/icon.svg
+icon: https://raw.githubusercontent.com/sebasa/umbrel-appstore/main/sebasa-mempool-watcher/icon.svg
 category: Finance
 name: Mempool Bitcoin Watcher
-version: "1.1.1"
+version: "1.2.0"
 tagline: Monitor Bitcoin addresses & fire webhooks via your Mempool node
 description: >-
   Never miss a transaction again. Mempool Bitcoin Watcher turns your Umbrel node into a powerful, real-time alerting system. By utilizing zero-polling WebSocket connections to your local Mempool instance, it instantly detects when watched addresses send or receive funds and fires off customizable webhooks to your preferred services.
@@ -25,8 +25,8 @@ repo: https://github.com/sebasa/umbrel-mempool-watcher
 support: https://github.com/sebasa/umbrel-mempool-watcher/issues
 port: 7890
 releaseNotes: >-
-  Initial release. Web UI with full CRUD for addresses and categories,
-  transaction history, webhook log, and real-time stats.
+  Updated dependencies (Python 3.13, Flask 3.1, Gunicorn 26, flask-cors 6,
+  websocket-client 1.9, requests 2.34).
 dependencies:
   - bitcoin
   - mempool

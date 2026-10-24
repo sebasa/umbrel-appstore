@@ -3,7 +3,7 @@
 # (edition 2024 requiere Rust 1.85+). Compila para la arch nativa
 # del builder, así que en una Pi sale binario ARM64 sin cross-compile.
 # ─────────────────────────────────────────────────────────────
-FROM rust:1.85-bookworm AS builder
+FROM rust:1.99-bookworm AS builder
 
 ARG BLOCKPARSER_REPO=https://github.com/sebasa/blockparser.git
 ARG BLOCKPARSER_TAG=0.12.5
@@ -20,7 +20,7 @@ RUN git clone --depth 1 --branch ${BLOCKPARSER_TAG} ${BLOCKPARSER_REPO} . \
 # ─────────────────────────────────────────────────────────────
 # Stage 2 — runtime: Python + FastAPI + el binario compilado
 # ─────────────────────────────────────────────────────────────
-FROM python:3.12-slim-bookworm
+FROM python:3.13-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates tini \

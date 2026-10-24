@@ -1,0 +1,27 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1E2A3A"/>
+      <stop offset="100%" stop-color="#0E141C"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFB547"/>
+      <stop offset="100%" stop-color="#E07B00"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo -->
+  <rect x="16" y="16" width="480" height="480" rx="104" fill="url(#bg)"/>
+
+  <!-- Escudo (offline / aislado) -->
+  <path d="M256 72 L408 128 V244 C408 340 344 408 256 444 C168 408 104 340 104 244 V128 Z" fill="url(#shield)"/>
+  <path d="M256 104 L380 150 V246 C380 324 328 380 256 410 C184 380 132 324 132 246 V150 Z" fill="#141B25"/>
+
+  <!-- Símbolo ₿ -->
+  <g fill="none" stroke="#F7931A" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M222 178 V346"/>
+    <path d="M222 182 H274 C302 182 318 198 318 220 C318 242 302 258 274 258 H222"/>
+    <path d="M222 258 H282 C312 258 328 276 328 300 C328 324 312 342 282 342 H222"/>
+    <path d="M240 152 V178 M272 152 V178 M240 346 V372 M272 346 V372"/>
+  </g>
+</svg>

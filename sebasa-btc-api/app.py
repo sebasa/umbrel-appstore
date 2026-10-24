@@ -7,6 +7,8 @@ Minimal dependencies: fastapi, uvicorn, bit, httpx
 import os
 import hashlib
 import struct
+from contextlib import asynccontextmanager
+
 import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -28,13 +30,21 @@ RPC_URL = f"http://{RPC_USER}:{RPC_PASS}@{RPC_HOST}:{RPC_PORT}"
 HIGH_FEE = int(os.getenv("HIGH_FEE", "150"))
 
 # ── App ──────────────────────────────────────────────────────────────────────
+http = httpx.AsyncClient(timeout=30.0)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    yield
+    await http.aclose()
+
+
 app = FastAPI(
     title="Bitcoin Node API",
     description="Lightweight API for interacting with a local Bitcoin node on Umbrel",
-    version="1.1.0",
+    version="1.2.0",
+    lifespan=lifespan,
 )
-
-http = httpx.AsyncClient(timeout=30.0)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -677,8 +687,3 @@ async def health():
     ok = all(status.values())
     return JSONResponse(content=status, status_code=200 if ok else 503)
 
-
-# ── Startup / Shutdown ───────────────────────────────────────────────────────
-@app.on_event("shutdown")
-async def shutdown():
-    await http.aclose()

@@ -34,18 +34,13 @@ Para reconstruir tras cambios:
 
 No abrir `index.html` directamente con `file://`: Chrome bloquea subrecursos de iframes file://.
 
-## Publicar la imagen (requisito para Umbrel)
+## Umbrel: sin imagen propia
 
-Umbrel no construye imágenes localmente — solo hace `docker pull`. Por eso el `docker-compose.yml` usa `image:` en lugar de `build:`. Antes de instalar la app en Umbrel hay que tener la imagen publicada en Docker Hub:
-
-    docker build -t sebasa/criptosuite:1.0.0 .
-    docker push sebasa/criptosuite:1.0.0
-
-La imagen actual referenciada en `docker-compose.yml`:
-
-    sebasa/criptosuite:1.0.0@sha256:c5c9af3572757b63a4f2d44973af6912663685f2f5143f70b412da5abfde65a3
-
-Si publicás una nueva versión, actualizá el tag y el digest en `docker-compose.yml` y en `umbrel-app.yml`.
+Desde la versión 1.2.0 el `docker-compose.yml` usa la imagen oficial `nginx` (multi-arch,
+amd64/arm64) y monta `index.html` y `tools/` desde `${APP_DATA_DIR}`, que es donde Umbrel
+copia esta carpeta al instalar o actualizar la app. Para cambiar las herramientas alcanza
+con commitear los archivos y subir la versión en `umbrel-app.yml`; no hace falta publicar
+nada en Docker Hub. El `Dockerfile` queda sólo para uso local.
 
 ## Umbrel
 

@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   web:
-    image: cstaelen/tidarr:latest
+    image: cstaelen/tidarr:1.2.8@sha256:e714986410febbe7327d44c4e9db14d08ffbeff16860b81aa90e1ee60b0e3ed3
     container_name: "tidarr"
     restart: on-failure
     stop_grace_period: 1m

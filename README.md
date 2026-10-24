@@ -124,7 +124,7 @@ Bitcoin open-source tools running unmodified, each in its own `<iframe sandbox>`
 | Paper Wallet | pointbiz/bitaddress.org |
 | Advanced Mnemonic | bitaps-com/mnemonic-offline-tool |
 
-See [sebasa-criptosuite/README.md](sebasa-criptosuite/README.md) for image publishing instructions.
+On Umbrel it runs on the official multi-arch `nginx` image and serves `index.html` + `tools/` straight from the app folder, so no custom image needs to be published. See [sebasa-criptosuite/README.md](sebasa-criptosuite/README.md) for local usage.
 
 ---
 
