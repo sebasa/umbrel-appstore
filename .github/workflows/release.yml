@@ -1,0 +1,300 @@
+# ─────────────────────────────────────────────────────────────
+# Release automático de las apps del store.
+#
+# En cada push a main detecta qué apps cambiaron y, por cada una:
+#   - si tiene imagen propia y cambió su código → build multi-arch
+#     (amd64 + arm64), push, y fija image: …:<versión>@sha256:… en
+#     su docker-compose.yml
+#   - sube el patch de version en umbrel-app.yml (1.0.4 → 1.0.5),
+#     salvo que ya lo hayas cambiado vos en ese push
+# Todo va en un único commit del bot, así Umbrel ve la versión nueva
+# recién cuando la imagen ya existe.
+#
+# Cambios sólo en README.md o icon.* no disparan release.
+# También se puede forzar desde Actions → Release apps → Run workflow.
+# ─────────────────────────────────────────────────────────────
+name: Release apps
+
+on:
+  push:
+    branches: [main]
+    paths: ["sebasa-*/**"]
+  workflow_dispatch:
+    inputs:
+      app:
+        description: App a publicar (carpeta, p.ej. sebasa-blockparser)
+        required: true
+        type: string
+      version:
+        description: Versión (vacío = subir patch)
+        required: false
+        type: string
+
+concurrency:
+  group: release-apps
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      builds: ${{ steps.detect.outputs.builds }}
+      platforms: ${{ steps.detect.outputs.platforms }}
+      bumps: ${{ steps.detect.outputs.bumps }}
+      any: ${{ steps.detect.outputs.any }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Detectar apps cambiadas
+        id: detect
+        env:
+          BEFORE: ${{ github.event.before }}
+          INPUT_APP: ${{ github.event.inputs.app }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          # Apps con imagen propia, tal como aparece en su docker-compose.yml.
+          # Las demás usan imágenes de terceros y sólo reciben bump de versión.
+          image_for() {
+            case "$1" in
+              sebasa-blockparser)     echo "sebasa/blockparser-gui" ;;
+              sebasa-mempool-watcher) echo "ghcr.io/sebasa/mempool-bitcoin-watcher" ;;
+            esac
+          }
+
+          read_version() { sed -nE 's/^version: *"?([^"]*)"?.*/\1/p' | head -1; }
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            [ -f "$INPUT_APP/umbrel-app.yml" ] || { echo "::error::No existe $INPUT_APP/umbrel-app.yml"; exit 1; }
+            apps="$INPUT_APP"
+            base="HEAD"
+          else
+            base="$BEFORE"
+            if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base="HEAD~1"; fi
+            changed=$(git diff --name-only "$base" HEAD | grep -Ev '/(README\.md|icon\.(svg|png))$' || true)
+            apps=$(echo "$changed" | grep -E '^sebasa-[^/]+/' | cut -d/ -f1 | sort -u)
+          fi
+
+          builds='[]'; bumps='[]'
+          for app in $apps; do
+            [ -f "$app/umbrel-app.yml" ] || continue
+            cur=$(read_version < "$app/umbrel-app.yml")
+            prev=$(git show "$base:$app/umbrel-app.yml" 2>/dev/null | read_version || true)
+
+            if [ -n "$INPUT_VERSION" ]; then
+              new="$INPUT_VERSION"
+            elif [ "${{ github.event_name }}" = "push" ] && [ -n "$prev" ] && [ "$cur" != "$prev" ]; then
+              new="$cur"   # el push ya trae la versión que querés
+            else
+              new=$(echo "$cur" | awk -F. -v OFS=. '{$NF=$NF+1; print}')
+            fi
+            echo "$new" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::$app: versión inválida '$new'"; exit 1; }
+
+            image=$(image_for "$app")
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              src="forced"
+            else
+              src=$(echo "$changed" | grep "^$app/" | grep -Ev '/(umbrel-app|docker-compose)\.yml$' || true)
+            fi
+
+            if [ -n "$image" ] && [ -n "$src" ]; then
+              case "$image" in ghcr.io/*) registry="ghcr.io" ;; *) registry="docker.io" ;; esac
+              builds=$(jq -c --arg a "$app" --arg v "$new" --arg i "$image" --arg r "$registry" \
+                '. + [{app:$a, version:$v, image:$i, registry:$r}]' <<< "$builds")
+              echo "- 🐳 **$app** $cur → $new (build $image)" >> "$GITHUB_STEP_SUMMARY"
+            elif [ "$new" != "$cur" ]; then
+              bumps=$(jq -c --arg a "$app" --arg v "$new" '. + [{app:$a, version:$v}]' <<< "$bumps")
+              echo "- 🔖 **$app** $cur → $new" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "- ✔️ **$app** ya en $cur, nada que hacer" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+          platforms=$(jq -c '[.[] as $b
+            | ({platform:"linux/amd64", runner:"ubuntu-24.04",     arch:"amd64"},
+               {platform:"linux/arm64", runner:"ubuntu-24.04-arm", arch:"arm64"})
+            | . + $b]' <<< "$builds")
+          any=$(jq -n --argjson b "$builds" --argjson u "$bumps" '($b + $u) | length > 0')
+
+          {
+            echo "builds=$builds"
+            echo "platforms=$platforms"
+            echo "bumps=$bumps"
+            echo "any=$any"
+          } >> "$GITHUB_OUTPUT"
+          echo "builds=$builds"; echo "bumps=$bumps"
+
+  build:
+    needs: detect
+    if: needs.detect.outputs.builds != '[]'
+    strategy:
+      fail-fast: true
+      matrix:
+        include: ${{ fromJSON(needs.detect.outputs.platforms) }}
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Login Docker Hub
+        if: matrix.registry == 'docker.io'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login GHCR
+        if: matrix.registry == 'ghcr.io'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build y push por digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: ./${{ matrix.app }}
+          platforms: ${{ matrix.platform }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ matrix.version }}
+          outputs: type=image,name=${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.app }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}-${{ matrix.arch }}
+
+      - name: Exportar digest
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: digests-${{ matrix.app }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  manifest:
+    needs: [detect, build]
+    if: needs.detect.outputs.builds != '[]'
+    strategy:
+      matrix:
+        include: ${{ fromJSON(needs.detect.outputs.builds) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.app }}-*
+          merge-multiple: true
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Login Docker Hub
+        if: matrix.registry == 'docker.io'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login GHCR
+        if: matrix.registry == 'ghcr.io'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Crear manifest multi-arch
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          APP: ${{ matrix.app }}
+          IMAGE: ${{ matrix.image }}
+          VERSION: ${{ matrix.version }}
+        run: |
+          docker buildx imagetools create \
+            -t "$IMAGE:$VERSION" -t "$IMAGE:latest" \
+            $(printf "$IMAGE@sha256:%s " *)
+          digest=$(docker buildx imagetools inspect "$IMAGE:$VERSION" --format '{{json .Manifest}}' | jq -r .digest)
+          mkdir -p "$RUNNER_TEMP/release"
+          jq -n --arg a "$APP" --arg v "$VERSION" --arg i "$IMAGE" --arg d "$digest" \
+            '{app:$a, version:$v, image:$i, digest:$d}' > "$RUNNER_TEMP/release/$APP.json"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.app }}
+          path: ${{ runner.temp }}/release/*.json
+          retention-days: 1
+
+  commit:
+    needs: [detect, manifest]
+    if: ${{ !failure() && !cancelled() && needs.detect.outputs.any == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Descargar resultados de los builds
+        if: needs.detect.outputs.builds != '[]'
+        uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/release
+          pattern: release-*
+          merge-multiple: true
+
+      - name: Aplicar versiones e imágenes
+        env:
+          BUMPS: ${{ needs.detect.outputs.bumps }}
+        run: |
+          set_version() { sed -Ei "s#^version: .*#version: \"$2\"#" "$1/umbrel-app.yml"; }
+
+          for f in "$RUNNER_TEMP"/release/*.json; do
+            [ -f "$f" ] || continue
+            app=$(jq -r .app "$f"); version=$(jq -r .version "$f")
+            image=$(jq -r .image "$f"); digest=$(jq -r .digest "$f")
+            compose="$app/docker-compose.yml"
+            grep -Eq "^\s*image: ${image}[:@]" "$compose" || { echo "::error::No encontré 'image: $image' en $compose"; exit 1; }
+            sed -Ei "s#^(\s*image: )${image}[:@].*#\1${image}:${version}@${digest}#" "$compose"
+            set_version "$app" "$version"
+            echo "- **$app** $version → \`$image:$version@$digest\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          jq -r '.[] | "\(.app) \(.version)"' <<< "$BUMPS" | while read -r app version; do
+            set_version "$app" "$version"
+            echo "- **$app** $version" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          git diff
+
+      - name: Commit y push a main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A 'sebasa-*/umbrel-app.yml' 'sebasa-*/docker-compose.yml'
+          if git diff --cached --quiet; then
+            echo "Sin cambios para commitear"; exit 0
+          fi
+          msg="release: $(git diff --cached --name-only -- '*/umbrel-app.yml' | cut -d/ -f1 | while read -r a; do
+            printf '%s %s, ' "$a" "$(sed -nE 's/^version: *"?([^"]*)"?.*/\1/p' "$a/umbrel-app.yml")"; done | sed 's/, $//')"
+          git commit -m "$msg"
+          # El push con GITHUB_TOKEN no vuelve a disparar este workflow.
+          for i in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1
