@@ -60,6 +60,7 @@ jobs:
             case "$1" in
               sebasa-blockparser)     echo "sebasa/blockparser-gui" ;;
               sebasa-mempool-watcher) echo "ghcr.io/sebasa/mempool-bitcoin-watcher" ;;
+              sebasa-tempmusic) echo "ghcr.io/sebasa/temp-music" ;;
             esac
           }
 
