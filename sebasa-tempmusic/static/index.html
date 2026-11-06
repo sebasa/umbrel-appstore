@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Temp Music</title>
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --line:#2a2f3a; --txt:#e8eaf0; --mut:#8b93a5; --acc:#6c8cff; --ok:#3ecf8e; --err:#ff6b6b; --run:#f5b942; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.45 system-ui,sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:8px; }
+  h1 { font-size:20px; margin:0; }
+  .sub { color:var(--mut); font-size:13px; }
+  button, select, textarea, input { font:inherit; color:inherit; }
+  button { background:var(--acc); border:0; color:#fff; padding:8px 14px; border-radius:8px; cursor:pointer; }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--txt); }
+  button.small { padding:4px 10px; font-size:13px; }
+  button:disabled { opacity:.5; cursor:default; }
+  textarea, select, input[type=text] { width:100%; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px; }
+  textarea { resize:vertical; }
+  .row { display:flex; gap:8px; margin-top:8px; align-items:center; }
+  .row select { width:auto; }
+  .grow { flex:1; }
+  .job { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-top:12px; }
+  .job-head { display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
+  .url { word-break:break-all; font-size:13px; color:var(--mut); }
+  .badge { font-size:12px; padding:2px 8px; border-radius:99px; border:1px solid currentColor; white-space:nowrap; }
+  .queued,.running { color:var(--run); } .done { color:var(--ok); } .error { color:var(--err); }
+  .files { margin:8px 0 0; padding:0; list-style:none; }
+  .files li { display:flex; justify-content:space-between; gap:8px; padding:4px 0; border-top:1px solid var(--line); font-size:14px; }
+  .files a { color:var(--acc); text-decoration:none; word-break:break-all; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px; color:var(--mut); font-size:12px; }
+  pre { background:#0b0d11; border:1px solid var(--line); border-radius:8px; padding:8px; max-height:220px; overflow:auto; font-size:12px; white-space:pre-wrap; margin:8px 0 0; }
+  dialog { background:var(--card); color:var(--txt); border:1px solid var(--line); border-radius:12px; width:min(680px,94vw); max-height:92vh; }
+  dialog::backdrop { background:#000a; }
+  dialog h2 { margin:14px 0 6px; font-size:15px; }
+  dialog h2:first-child { margin-top:0; }
+  dialog textarea { font-family:ui-monospace,monospace; font-size:13px; min-height:130px; }
+  .box { border:1px solid var(--line); border-radius:8px; padding:10px; margin-top:6px; }
+  .box a { color:var(--acc); word-break:break-all; font-size:13px; }
+  .empty { color:var(--mut); text-align:center; margin-top:32px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>🎵 Temp Music</h1>
+      <div class="sub" id="sub">Los archivos se borran solos pasadas 24 h</div>
+    </div>
+    <div class="row" style="margin:0">
+      <button class="ghost small" id="btnSettings">Ajustes</button>
+      <form method="post" action="/logout" style="margin:0"><button class="ghost small">Salir</button></form>
+    </div>
+  </header>
+
+  <textarea id="url" rows="3" placeholder="Pegá uno o varios links (YouTube, SoundCloud, Bandcamp, Beatport, Tidal…), uno por línea"></textarea>
+  <div class="row">
+    <select id="tool">
+      <option value="auto">Auto (según el link)</option>
+      <option value="yt-dlp">Forzar yt-dlp</option>
+      <option value="beatportdl">Forzar beatportdl</option>
+      <option value="tidal">Forzar tidal-dl</option>
+    </select>
+    <span class="grow"></span>
+    <button id="btnGo">Descargar</button>
+  </div>
+  <div id="msg" class="sub" style="margin-top:6px;min-height:18px"></div>
+
+  <div id="jobs"></div>
+</main>
+
+<dialog id="dlg">
+  <h2>Beatport — credenciales y opciones <span class="sub">(beatportdl-config.yml: <code>username</code> / <code>password</code>)</span></h2>
+  <textarea id="cfgB" spellcheck="false"></textarea>
+
+  <h2>Tidal <span class="sub" id="tidalState"></span></h2>
+  <div class="box">
+    <div class="row" style="margin-top:0">
+      <button class="ghost small" id="btnTLogin">Iniciar sesión en Tidal</button>
+      <button class="ghost small" id="btnTLogout">Cerrar sesión</button>
+    </div>
+    <div id="tidalFlow" style="display:none;margin-top:8px">
+      <div class="sub">1) Abrí este link e iniciá sesión. Al terminar vas a caer en una página «Oops»:</div>
+      <a id="tidalLink" target="_blank" rel="noopener noreferrer"></a>
+      <div class="sub" style="margin-top:8px">2) Copiá la URL completa de esa página «Oops» y pegala acá:</div>
+      <div class="row"><input type="text" id="tidalUrl" placeholder="https://tidal.com/android/login/auth?code=…" autocomplete="off"><button class="small" id="btnTFinish">Confirmar</button></div>
+    </div>
+  </div>
+  <h2 style="margin-top:10px">Opciones de Tidal <span class="sub">(settings.json: calidad, plantillas de nombre…)</span></h2>
+  <textarea id="cfgT" spellcheck="false"></textarea>
+
+  <h2>yt-dlp <span class="sub">(yt-dlp.conf)</span></h2>
+  <textarea id="cfgY" spellcheck="false"></textarea>
+
+  <div class="row" style="margin-top:12px">
+    <button class="ghost small" id="btnUpd">Actualizar yt-dlp</button>
+    <span class="grow sub" id="cfgMsg"></span>
+    <button class="ghost" id="btnClose">Cerrar</button>
+    <button id="btnSave">Guardar</button>
+  </div>
+</dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+const openLogs = new Set();
+let state = { jobs: [], now: 0 };
+let skew = 0;
+
+const fmtSize = b => b > 1e6 ? (b/1e6).toFixed(1)+' MB' : Math.max(1, Math.round(b/1e3))+' KB';
+function fmtLeft(sec) {
+  if (sec <= 0) return 'expirando…';
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60);
+  return `se borra en ${h} h ${String(m).padStart(2,'0')} min`;
+}
+const labels = { queued:'En cola', running:'Descargando', done:'Listo', error:'Error' };
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const toolName = t => t === 'tidal' ? 'tidal-dl' : t;
+const post = (path, body) => api(path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body || {}) });
+const put = (path, body) => api(path, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  if (r.status === 401) { location.href = '/login'; throw new Error('Sesión vencida'); }
+  if (r.status === 204) return {};
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+function render() {
+  const box = $('#jobs');
+  if (!state.jobs.length) { box.innerHTML = '<div class="empty">Todavía no hay descargas</div>'; return; }
+  const now = Date.now()/1000 + skew;
+  box.innerHTML = state.jobs.map(j => {
+    const files = j.files.map(f => `<li><a href="files/${j.id}/${f.path.split('/').map(encodeURIComponent).join('/')}">${esc(f.path)}</a><span class="sub">${fmtSize(f.size)}</span></li>`).join('');
+    const showZip = j.files.length > 1;
+    return `<div class="job" data-id="${j.id}">
+      <div class="job-head">
+        <div class="url">${esc(toolName(j.tool))} · ${esc(j.url)}</div>
+        <span class="badge ${j.status}">${labels[j.status]}</span>
+      </div>
+      ${j.error ? `<div class="error" style="margin-top:6px">${esc(j.error)}</div>` : ''}
+      ${files ? `<ul class="files">${files}</ul>` : ''}
+      <div class="meta">
+        <span>${fmtLeft(j.expires_at - now)}</span>
+        <span class="grow"></span>
+        ${showZip ? `<a class="small" style="color:var(--acc)" href="api/jobs/${j.id}/zip">Bajar todo (.zip)</a>` : ''}
+        <button class="ghost small" data-act="log">Log</button>
+        <button class="ghost small" data-act="del" ${['queued','running'].includes(j.status)?'disabled':''}>Borrar</button>
+      </div>
+      ${openLogs.has(j.id) ? `<pre id="log-${j.id}">cargando…</pre>` : ''}
+    </div>`;
+  }).join('');
+  openLogs.forEach(refreshLog);
+}
+
+async function refreshLog(id) {
+  const el = document.getElementById('log-' + id);
+  if (!el) return;
+  try {
+    const { log } = await api(`api/jobs/${id}/log`);
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
+    el.textContent = log || '(sin salida todavía)';
+    if (atBottom) el.scrollTop = el.scrollHeight;
+  } catch {}
+}
+
+async function load() {
+  try {
+    state = await api('api/jobs');
+    skew = state.now - Date.now()/1000;
+    $('#sub').textContent = `Los archivos se borran solos pasadas ${Math.round(state.ttl_seconds/3600)} h`;
+    render();
+  } catch (e) { $('#msg').textContent = e.message; }
+}
+
+$('#btnGo').onclick = async () => {
+  const url = $('#url').value.trim();
+  if (!url) return;
+  $('#btnGo').disabled = true; $('#msg').textContent = '';
+  try {
+    await post('api/jobs', { url, tool: $('#tool').value });
+    $('#url').value = '';
+    await load();
+  } catch (e) { $('#msg').textContent = e.message; }
+  $('#btnGo').disabled = false;
+};
+
+$('#jobs').onclick = async e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const id = b.closest('.job').dataset.id;
+  if (b.dataset.act === 'log') { openLogs.has(id) ? openLogs.delete(id) : openLogs.add(id); render(); }
+  if (b.dataset.act === 'del') { await api('api/jobs/' + id, { method:'DELETE' }).catch(err => alert(err.message)); openLogs.delete(id); load(); }
+};
+
+// ---- Ajustes ----
+async function tidalStatus() {
+  const { logged_in } = await api('api/tidal/status');
+  $('#tidalState').textContent = logged_in ? '· sesión iniciada ✓' : '· sin sesión';
+  return logged_in;
+}
+$('#btnSettings').onclick = async () => {
+  $('#cfgMsg').textContent = ''; $('#tidalFlow').style.display = 'none';
+  const [y, b, t] = await Promise.all([api('api/config/yt-dlp'), api('api/config/beatportdl'), api('api/config/tidal')]);
+  $('#cfgY').value = y.content; $('#cfgB').value = b.content; $('#cfgT').value = t.content;
+  await tidalStatus();
+  $('#dlg').showModal();
+};
+$('#btnClose').onclick = () => $('#dlg').close();
+$('#btnSave').onclick = async () => {
+  try {
+    await put('api/config/yt-dlp', { content: $('#cfgY').value });
+    await put('api/config/beatportdl', { content: $('#cfgB').value });
+    await put('api/config/tidal', { content: $('#cfgT').value });
+    $('#cfgMsg').textContent = 'Guardado ✓';
+  } catch (e) { $('#cfgMsg').textContent = e.message; }
+};
+$('#btnUpd').onclick = async () => {
+  $('#cfgMsg').textContent = 'Actualizando yt-dlp…';
+  try { const r = await post('api/update-ytdlp'); $('#cfgMsg').textContent = `yt-dlp ${r.version} ${r.ok ? '✓' : '(falló)'}`; }
+  catch (e) { $('#cfgMsg').textContent = e.message; }
+};
+$('#btnTLogin').onclick = async () => {
+  $('#cfgMsg').textContent = 'Pidiendo link a Tidal…';
+  try {
+    const r = await post('api/tidal/login/start');
+    if (r.url) {
+      $('#tidalLink').href = r.url; $('#tidalLink').textContent = r.url;
+      $('#tidalFlow').style.display = 'block'; $('#cfgMsg').textContent = '';
+    } else { $('#cfgMsg').textContent = r.logged_in ? 'Ya había una sesión válida ✓' : (r.output || 'Sin respuesta'); await tidalStatus(); }
+  } catch (e) { $('#cfgMsg').textContent = e.message; }
+};
+$('#btnTFinish').onclick = async () => {
+  $('#cfgMsg').textContent = 'Confirmando…';
+  try {
+    await post('api/tidal/login/finish', { url: $('#tidalUrl').value });
+    $('#tidalUrl').value = ''; $('#tidalFlow').style.display = 'none';
+    $('#cfgMsg').textContent = 'Sesión de Tidal iniciada ✓'; await tidalStatus();
+  } catch (e) { $('#cfgMsg').textContent = e.message; }
+};
+$('#btnTLogout').onclick = async () => {
+  try { await post('api/tidal/logout'); await tidalStatus(); $('#cfgMsg').textContent = 'Sesión de Tidal cerrada'; }
+  catch (e) { $('#cfgMsg').textContent = e.message; }
+};
+
+load();
+setInterval(load, 3000);
+setInterval(render, 30000);
+</script>
+</body>
+</html>

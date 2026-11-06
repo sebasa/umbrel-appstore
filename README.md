@@ -11,6 +11,7 @@ Community App Store for Umbrel with Bitcoin tools and media apps.
 | **sebasa-blockparser** | 7899 | Export raw blockchain data to CSV (rusty-blockparser GUI) |
 | **sebasa-criptosuite** | 8777 | Bitcoin offline tools suite in isolated iframes |
 | **sebasa-tidarr** | 7892 | Self-hosted Tidal media downloader with web UI |
+| **sebasa-tempmusic** | 7893 | yt-dlp + beatportdl + tidal-dl con web UI; los archivos se borran a las 24 h |
 
 ## Repo Structure
 
@@ -45,10 +46,17 @@ umbrel-appstore/
 │   ├── icon.svg
 │   ├── index.html
 │   └── tools/
-└── sebasa-tidarr/
+├── sebasa-tidarr/
+│   ├── umbrel-app.yml
+│   ├── docker-compose.yml
+│   └── icon.svg
+└── sebasa-tempmusic/             ← own image (GHCR)
     ├── umbrel-app.yml
     ├── docker-compose.yml
-    └── icon.svg
+    ├── Dockerfile
+    ├── icon.svg
+    ├── server.py
+    └── static/
 ```
 
 ## How to Install on Umbrel
@@ -76,6 +84,7 @@ The workflow looks at which `sebasa-*/` folders changed in the push and handles 
 | `sebasa-btc-api` | third-party (`python`) | Bumps `version` only |
 | `sebasa-criptosuite` | third-party (`nginx`) | Bumps `version` only |
 | `sebasa-tidarr` | third-party (`cstaelen/tidarr`) | Bumps `version` only |
+| `sebasa-tempmusic` | own — `ghcr.io/sebasa/temp-music` (GHCR) | Same as blockparser |
 
 Rules:
 
@@ -110,6 +119,7 @@ and at `1.0.5`, in one bot commit.
    *Actions → Release apps → Run workflow* and run it twice, leaving *version* empty:
    - `sebasa-blockparser` → `1.0.5`, first multi-arch image
    - `sebasa-mempool-watcher` → `1.2.1`, stops using `:latest`
+   - `sebasa-tempmusic` → `1.0.1`, first image (then make the GHCR package public)
 
 ### Running it by hand
 
@@ -222,3 +232,9 @@ On Umbrel it runs on the official multi-arch `nginx` image and serves `index.htm
 ## Tidarr (`sebasa-tidarr`) — Port 7892
 
 Web interface to download up to 24-bit/192 kHz media (tracks, albums, playlists, videos) from Tidal. Based on [cstaelen/tidarr](https://github.com/cstaelen/tidarr).
+
+---
+
+## Temp Music (`sebasa-tempmusic`) — Port 7893
+
+Web UI that runs **yt-dlp**, **beatportdl** and **tidal-dl** (`tidaler`) with your own config. Every download lives in its own folder and is deleted automatically **24 h** after it was created (`TTL_HOURS` in `docker-compose.yml`). See [sebasa-tempmusic/README.md](sebasa-tempmusic/README.md) for credentials, Tidal login and how to expose it with a Cloudflare Tunnel.
