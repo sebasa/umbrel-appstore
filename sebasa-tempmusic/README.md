@@ -18,7 +18,7 @@ Todo desde la propia app → **Ajustes**:
 - **Tidal:** botón **Iniciar sesión en Tidal** → abrís el link, iniciás sesión, y pegás la URL de la página «Oops» donde terminás. El token queda guardado; no hay usuario/clave que guardar. Calidad y plantillas de nombre están en el cuadro *Opciones de Tidal* (`quality_audio`: `LOW`, `HIGH`, `LOSSLESS`, `HI_RES_LOSSLESS`).
 - **yt-dlp:** cuadro `yt-dlp.conf`, una opción por línea.
 
-En disco viven en `${APP_DATA_DIR}/data/config/` dentro del Umbrel (`beatportdl-config.yml`, `yt-dlp.conf`, `tidaler/settings.json`, `tidaler/token.json`).
+En disco viven en `${APP_DATA_DIR}/data/app/config/` dentro del Umbrel (`beatportdl-config.yml`, `yt-dlp.conf`, `tidaler/settings.json`, `tidaler/token.json`).
 
 ## Acceso y túnel de Cloudflare
 

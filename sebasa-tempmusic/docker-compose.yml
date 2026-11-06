@@ -5,15 +5,16 @@ services:
     environment:
       APP_HOST: sebasa-tempmusic_web_1
       APP_PORT: 7893
-      # La app tiene login propio: así el túnel de Cloudflare no choca con el login de Umbrel.
+      # La app tiene login propio (APP_PASSWORD); así el túnel de Cloudflare no choca con el login de Umbrel.
       PROXY_AUTH_ADD: "false"
 
   web:
     image: ghcr.io/sebasa/temp-music:1.0.0
+    init: true
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/data/app:/data
     environment:
       TTL_HOURS: "24"
       MAX_PARALLEL_JOBS: "2"

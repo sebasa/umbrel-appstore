@@ -1,26 +1,31 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: sebasa-tempmusic
+storage:
+  dataRoot: data
+category: media
 name: Temp Music
 icon: https://raw.githubusercontent.com/sebasa/umbrel-appstore/main/sebasa-tempmusic/icon.svg
-tagline: Descargá música con yt-dlp, Beatport y Tidal; se borra sola a las 24 h
-category: media
 version: "1.0.0"
-port: 7893
+tagline: Descargá música con yt-dlp, Beatport y Tidal; se borra sola a las 24 h
 description: >-
-  Pegás un link (YouTube, SoundCloud, Bandcamp, Beatport, Tidal, etc.) y la app corre
-  yt-dlp, beatportdl o tidaler con tu configuración. Los archivos quedan disponibles para
-  bajar desde el navegador y se eliminan automáticamente pasadas 24 horas.
+  Pegás un link (YouTube, SoundCloud, Bandcamp, Beatport, Tidal, etc.) y la app corre yt-dlp, beatportdl o tidaler con tu configuración. Los archivos quedan disponibles para bajar desde el navegador y se eliminan automáticamente pasadas 24 horas.
 
-  Las credenciales y opciones de cada herramienta se editan desde Ajustes. La app tiene su
-  propio login (la contraseña que muestra Umbrel), así que se puede exponer de forma segura
-  con un túnel de Cloudflare sin pasar por el login de Umbrel.
+
+  Primer uso: entrá con la contraseña que Umbrel muestra para esta app, abrí Ajustes y cargá tus credenciales de Beatport (username y password) y/o iniciá sesión en Tidal.
+
+
+  La app tiene su propio login, por eso Umbrel no pide el suyo: se puede exponer con un túnel de Cloudflare sin que choque con el login de Umbrel.
+releaseNotes: ""
 developer: Sebasa
-website: ""
-repo: "https://github.com/sebasa/umbrel-appstore"
-support: "https://github.com/sebasa/umbrel-appstore/issues"
+website: https://github.com/sebasa/umbrel-appstore
 dependencies: []
+repo: https://github.com/sebasa/umbrel-appstore
+support: https://github.com/sebasa/umbrel-appstore/issues
+port: 7893
+gallery: []
+path: ""
 defaultUsername: ""
+defaultPassword: ""
 deterministicPassword: true
 submitter: Sebasa
-submission: ""
-releaseNotes: Primera versión.
+submission: https://github.com/sebasa/umbrel-appstore
