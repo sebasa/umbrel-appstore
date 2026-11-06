@@ -9,7 +9,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: ghcr.io/sebasa/temp-music:1.0.0
+    image: ghcr.io/sebasa/temp-music:1.0.2@sha256:f31565c59690c60027f94d59671d3b58b852953e856f97498aa4eaf7448536fd
     init: true
     restart: on-failure
     stop_grace_period: 1m

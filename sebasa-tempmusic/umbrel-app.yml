@@ -5,7 +5,7 @@ storage:
 category: media
 name: Temp Music
 icon: https://raw.githubusercontent.com/sebasa/umbrel-appstore/main/sebasa-tempmusic/icon.svg
-version: "1.0.1"
+version: "1.0.2"
 tagline: Descargá música con yt-dlp, Beatport y Tidal; se borra sola a las 24 h
 description: >-
   Pegás un link (YouTube, SoundCloud, Bandcamp, Beatport, Tidal, etc.) y la app corre yt-dlp, beatportdl o tidaler con tu configuración. Los archivos quedan disponibles para bajar desde el navegador y se eliminan automáticamente pasadas 24 horas.
